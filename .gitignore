@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.log
+data/orders.json
+data/admin_users.json
+uploads/*
+!uploads/.gitkeep
+!uploads/products/
+!uploads/products/*
+.DS_Store
