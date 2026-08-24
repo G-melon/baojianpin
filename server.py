@@ -36,7 +36,7 @@ DEFAULT_ORDER_STATUS = "新订单"
 # JSON 读改写需要互斥，否则两个顾客同时下单会丢单
 _data_lock = threading.Lock()
 _admin_sessions = {}
-_admin_codes = {}
+ADMIN_CREDENTIALS_FILE = DATA_DIR / 'admin_credentials.json'
 
 DATA_DIR.mkdir(exist_ok=True)
 UPLOAD_DIR.mkdir(exist_ok=True)
@@ -180,44 +180,27 @@ def normalize_order(order):
         order["status"] = DEFAULT_ORDER_STATUS
     return order
 
-def normalize_phone(phone):
-    return re.sub(r'\D+', '', str(phone or ''))
-
-def is_valid_phone(phone):
-    return bool(re.fullmatch(r'1\d{10}', normalize_phone(phone)))
-
-def create_admin_session(phone):
+def create_admin_session(account):
     token = secrets.token_urlsafe(32)
     _admin_sessions[token] = {
-        "phone": phone,
+        "account": account,
         "createdAt": datetime.now().isoformat()
     }
     return token
 
-def create_admin_code(phone):
-    code = f"{secrets.randbelow(1000000):06d}"
-    _admin_codes[phone] = {
-        "code": code,
-        "createdAt": datetime.now(),
-        "attempts": 0
-    }
-    return code
-
-def verify_admin_code(phone, code):
-    entry = _admin_codes.get(phone)
-    if not entry:
-        return False, "请先获取验证码"
-    if (datetime.now() - entry["createdAt"]).total_seconds() > 600:
-        _admin_codes.pop(phone, None)
-        return False, "验证码已过期，请重新获取"
-    entry["attempts"] += 1
-    if entry["attempts"] > 5:
-        _admin_codes.pop(phone, None)
-        return False, "验证码错误次数过多，请重新获取"
-    if not secrets.compare_digest(str(code or '').strip(), entry["code"]):
-        return False, "验证码错误"
-    _admin_codes.pop(phone, None)
-    return True, ""
+def get_admin_credentials():
+    account = os.environ.get('ADMIN_ACCOUNT', '').strip()
+    password = os.environ.get('ADMIN_PASSWORD', '')
+    if account and password:
+        return account, password
+    if ADMIN_CREDENTIALS_FILE.exists():
+        try:
+            with open(ADMIN_CREDENTIALS_FILE, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            return str(data.get('account', '')).strip(), str(data.get('password', ''))
+        except (OSError, json.JSONDecodeError):
+            return '', ''
+    return '', ''
 
 # ========== 静态文件 ==========
 @app.route('/')
@@ -586,34 +569,22 @@ def export_orders_xlsx():
 @app.route('/api/admin/state', methods=['GET'])
 def admin_state():
     """返回后台登录方式。"""
-    return jsonify({"authMode": "sms_code"})
-
-@app.route('/api/admin/send-code', methods=['POST'])
-def admin_send_code():
-    """生成手机号验证码。生产部署时可在这里接入短信服务商。"""
-    data = request.get_json() or {}
-    phone = normalize_phone(data.get('phone', ''))
-    if not is_valid_phone(phone):
-        return jsonify({"error":"请填写正确的 11 位手机号"}), 400
-    code = create_admin_code(phone)
-    return jsonify({
-        "ok": True,
-        "phone": phone,
-        "code": code,
-        "message": "验证码已生成，本地模式下直接显示在页面上。"
-    })
+    return jsonify({"authMode": "fixed_password"})
 
 @app.route('/api/admin/login', methods=['POST'])
 def admin_login():
     data = request.get_json() or {}
-    phone = normalize_phone(data.get('phone', ''))
-    code = data.get('code', '')
-    if not is_valid_phone(phone):
-        return jsonify({"error":"请填写正确的 11 位手机号"}), 400
-    ok, error = verify_admin_code(phone, code)
-    if not ok:
-        return jsonify({"error": error}), 403
-    return jsonify({"token": create_admin_session(phone), "ok":True, "phone": phone})
+    account = str(data.get('account', '')).strip()
+    password = str(data.get('password', ''))
+    expected_account, expected_password = get_admin_credentials()
+    if not expected_account or not expected_password:
+        return jsonify({"error": "后台账号未配置"}), 503
+    if not (
+        secrets.compare_digest(account, expected_account) and
+        secrets.compare_digest(password, expected_password)
+    ):
+        return jsonify({"error": "账号或密码错误"}), 403
+    return jsonify({"token": create_admin_session(account), "ok": True, "account": account})
 
 @app.route('/api/admin/check', methods=['GET'])
 def admin_check():

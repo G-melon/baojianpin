@@ -3,6 +3,7 @@ __pycache__/
 *.log
 data/orders.json
 data/admin_users.json
+data/admin_credentials.json
 uploads/*
 !uploads/.gitkeep
 !uploads/products/
