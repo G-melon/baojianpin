@@ -560,7 +560,7 @@ button, input, textarea, select { font-family: SimSun, 'Songti SC', 'Noto Serif 
       <textarea id="editUsage" placeholder="例如：60粒/瓶&#10;2粒/天&#10;随餐服用" maxlength="1000"></textarea>
     </div>
     <div class="form-group">
-      <label>内购价</label>
+      <label>小竹售价</label>
       <input type="number" id="editInternalPrice" placeholder="例如：88" min="0" step="0.01">
     </div>
     <div class="form-group">
@@ -789,7 +789,7 @@ function renderProducts(filter = '') {
     const image = escapeHTML(p.image || '');
     const emoji = escapeHTML(p.emoji || '');
     const cat = escapeHTML(p.cat || '未分类');
-    const price = escapeHTML(p.internalPriceText || (p.internalPrice ? `¥${p.internalPrice}/瓶` : ''));
+    const price = escapeHTML(p.internalPriceText || (p.internalPrice ? `¥${p.internalPrice}` : ''));
     return `
     <div class="product-card">
       <div class="card-img">
@@ -1129,7 +1129,7 @@ document.getElementById('btnSaveProduct').addEventListener('click', async functi
   const usage = document.getElementById('editUsage').value.trim();
   const internalPriceRaw = document.getElementById('editInternalPrice').value.trim();
   const internalPrice = internalPriceRaw === '' ? '' : Number(internalPriceRaw);
-  const internalPriceText = internalPriceRaw === '' ? '' : `¥${internalPriceRaw}/瓶`;
+  const internalPriceText = internalPriceRaw === '' ? '' : `¥${internalPriceRaw}`;
   const productionDate = document.getElementById('editProductionDate').value;
   const stock = document.getElementById('editStock').value.trim();
   const details = efficacy.split(/\n+/).map(v => v.trim()).filter(Boolean);
@@ -1148,7 +1148,7 @@ document.getElementById('btnSaveProduct').addEventListener('click', async functi
     specs: {
       商品名称: name,
       规格: cardOptions[0] || '',
-      内购价: internalPriceText,
+      小竹售价: internalPriceText,
       生产日期: productionDate,
       库存: stock
     },

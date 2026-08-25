@@ -81,12 +81,12 @@ body.welcome-active {
   position: fixed;
   inset: 0;
   z-index: 300;
-  background: #fff;
+  background: #F8F6F1;
   color: var(--color-text);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 40px 24px;
+  padding: 48px 28px;
   transition: opacity 1800ms var(--ease-out), visibility 1800ms var(--ease-out);
 }
 .welcome-screen.hidden {
@@ -95,30 +95,129 @@ body.welcome-active {
   pointer-events: none;
 }
 .welcome-content {
-  width: min(860px, 100%);
-  text-align: center;
+  width: min(1120px, 100%);
   display: grid;
-  justify-items: center;
-  gap: 30px;
+  grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
+  align-items: center;
+  gap: 46px;
 }
-.welcome-logo {
-  width: min(240px, 52vw);
-  height: auto;
-  object-fit: contain;
+.welcome-copy {
+  display: grid;
+  gap: 20px;
   opacity: 0;
   transform: translateY(12px);
   animation: welcomeFadeUp 900ms var(--ease-out) 120ms forwards;
 }
+.welcome-kicker {
+  width: fit-content;
+  color: var(--color-primary);
+  border: 1px solid rgba(139,26,43,0.22);
+  background: #FFFDF9;
+  border-radius: var(--radius-full);
+  padding: 7px 14px;
+  font-size: 0.86rem;
+  font-weight: 850;
+}
+.welcome-title {
+  color: var(--color-primary);
+  font-size: clamp(2.2rem, 5vw, 4.35rem);
+  line-height: 1.12;
+  font-weight: 900;
+  letter-spacing: 0;
+}
 .welcome-intro {
-  width: min(760px, 100%);
+  max-width: 660px;
   color: #34302E;
   font-size: 1.18rem;
   line-height: 2.05;
   text-align: left;
-  text-indent: 2em;
+}
+.welcome-highlights {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  max-width: 680px;
+}
+.welcome-highlight {
+  min-height: 86px;
+  border: 1px solid #E3D8C8;
+  border-radius: 8px;
+  background: #FFFDF9;
+  padding: 13px 14px;
+}
+.welcome-highlight strong {
+  display: block;
+  color: var(--color-primary);
+  font-size: 1.05rem;
+  line-height: 1.2;
+  margin-bottom: 6px;
+}
+.welcome-highlight span {
+  display: block;
+  color: var(--color-text-muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+.welcome-visual {
+  position: relative;
+  min-height: 540px;
   opacity: 0;
   transform: translateY(14px);
   animation: welcomeFadeUp 1100ms var(--ease-out) 620ms forwards;
+}
+.welcome-visual::before {
+  content: "";
+  position: absolute;
+  inset: 64px 16px 48px 34px;
+  border: 1px solid #E3D8C8;
+  background: #FFFDF9;
+  border-radius: 10px;
+}
+.welcome-product {
+  position: absolute;
+  display: grid;
+  gap: 10px;
+  width: 190px;
+  padding: 14px;
+  border: 1px solid #E6DCCE;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 18px 42px rgba(80,44,36,0.11);
+}
+.welcome-product img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 6px;
+  background: #F3EEE7;
+}
+.welcome-product span {
+  color: var(--color-text-muted);
+  font-size: 0.84rem;
+  line-height: 1.35;
+  text-align: center;
+}
+.welcome-product.main {
+  width: 238px;
+  left: 50%;
+  top: 70px;
+  transform: translateX(-50%);
+}
+.welcome-product.side-a { left: 18px; bottom: 96px; }
+.welcome-product.side-b { right: 0; bottom: 32px; }
+.welcome-badge {
+  position: absolute;
+  left: 50%;
+  bottom: 182px;
+  transform: translateX(-50%);
+  width: min(260px, 72%);
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
+  color: #fff;
+  padding: 12px 18px;
+  text-align: center;
+  font-weight: 900;
+  box-shadow: 0 14px 34px rgba(139,26,43,0.18);
 }
 .welcome-enter {
   position: fixed;
@@ -1376,11 +1475,31 @@ body.welcome-active {
     overflow-y: auto;
     padding: 56px 18px 110px;
   }
-  .welcome-content { gap: 22px; }
-  .welcome-logo { width: min(190px, 62vw); }
+  .welcome-content {
+    grid-template-columns: 1fr;
+    gap: 26px;
+  }
+  .welcome-title { font-size: clamp(2rem, 12vw, 3.15rem); }
   .welcome-intro {
     font-size: 1rem;
     line-height: 1.95;
+  }
+  .welcome-highlights { grid-template-columns: 1fr; }
+  .welcome-highlight { min-height: auto; }
+  .welcome-visual {
+    width: 100%;
+    min-height: 410px;
+  }
+  .welcome-visual::before { inset: 40px 6px 36px; }
+  .welcome-product { width: 142px; padding: 10px; }
+  .welcome-product.main { width: 172px; top: 52px; }
+  .welcome-product.side-a { left: 10px; bottom: 78px; }
+  .welcome-product.side-b { right: 8px; bottom: 18px; }
+  .welcome-badge {
+    bottom: 132px;
+    width: min(230px, 78%);
+    padding: 10px 14px;
+    font-size: 0.92rem;
   }
   .image-preview-dialog { width: 94vw; height: 88vh; }
   .image-preview-nav {
@@ -1405,10 +1524,33 @@ body.welcome-active {
 <body>
 <section class="welcome-screen" id="welcomeScreen" aria-label="保健品销售商城简介">
   <div class="welcome-content">
-    <div class="welcome-logo" aria-hidden="true"></div>
-    <p class="welcome-intro">
-      欢迎使用保健品家庭内购平台。这里整理了家庭内购商品的图片、功效、服用细节、内购价、库存和生产日期，方便快速筛选、查看详情并提交下单清单。
-    </p>
+    <div class="welcome-copy">
+      <div class="welcome-kicker">家庭内购 · 小竹售价</div>
+      <h2 class="welcome-title">保健品家庭内购平台</h2>
+      <p class="welcome-intro">
+        精选鱼油、益生菌、维生素矿物质、护胃护肝和美容养护产品，集中查看图片、功效、服用细节、库存与生产日期，方便一家人快速筛选下单。
+      </p>
+      <div class="welcome-highlights" aria-label="平台特点">
+        <div class="welcome-highlight"><strong>小竹售价</strong><span>价格按最新清单展示</span></div>
+        <div class="welcome-highlight"><strong>按需筛选</strong><span>按品类查看适合产品</span></div>
+        <div class="welcome-highlight"><strong>一键下单</strong><span>选择数量后提交清单</span></div>
+      </div>
+    </div>
+    <div class="welcome-visual" aria-hidden="true">
+      <div class="welcome-product main">
+        <img src="/uploads/products/爱塔馨安鱼油软胶囊.png" alt="">
+        <span>心脑血管 · 高浓缩鱼油</span>
+      </div>
+      <div class="welcome-product side-a">
+        <img src="/uploads/products/呼吸道免疫益生菌.png" alt="">
+        <span>益生菌调理</span>
+      </div>
+      <div class="welcome-product side-b">
+        <img src="/uploads/products/高含量辅酶q10软胶囊.png" alt="">
+        <span>辅酶 Q10</span>
+      </div>
+      <div class="welcome-badge">扫码进平台 · 查看小竹售价</div>
+    </div>
   </div>
   <button class="welcome-enter" id="welcomeEnter" type="button">进入商城</button>
 </section>
@@ -1889,7 +2031,7 @@ function renderProductDetail(product, activeImage = null, selectedCardOption = n
   if (cardOptions.length && !specs['可选规格']) specs['可选规格'] = cardOptions.join('、');
   if (productOptions.length && !specs['可选商品选项']) specs['可选商品选项'] = productOptions.join('、');
   const currentQty = getCartQty(product.id, currentCardOption, currentProductOption);
-  const priceText = product.internalPriceText || (product.internalPrice ? `¥${escapeHTML(product.internalPrice)}/瓶` : '');
+  const priceText = product.internalPriceText || (product.internalPrice ? `¥${escapeHTML(product.internalPrice)}` : '');
   const efficacyCopy = product.efficacy || (product.details || []).join('\n');
   const usageCopy = product.usage || (product.usageDetails || []).join('\n');
   const specRows = Object.entries(specs).map(([label, value]) => `
@@ -1929,7 +2071,7 @@ function renderProductDetail(product, activeImage = null, selectedCardOption = n
             </div>
           </div>
           <div>
-            ${priceText ? `<div class="detail-section-title">内购价</div><div class="detail-price">${escapeHTML(priceText)}</div>` : ''}
+            ${priceText ? `<div class="detail-section-title">小竹售价</div><div class="detail-price">${escapeHTML(priceText)}</div>` : ''}
             <div class="detail-spec-grid">${specRows}</div>
             ${efficacyCopy ? `<div class="detail-section-title">功效</div><div class="detail-copy">${escapeHTML(efficacyCopy)}</div>` : ''}
             ${usageCopy ? `<div class="detail-section-title">服用细节</div><div class="detail-copy">${escapeHTML(usageCopy)}</div>` : ''}
@@ -1951,7 +2093,7 @@ function renderProductDetail(product, activeImage = null, selectedCardOption = n
         </div>
         ${priceText ? `
         <div class="detail-order-row">
-          <span>内购价</span>
+          <span>小竹售价</span>
           <span class="detail-order-value">${escapeHTML(priceText)}</span>
         </div>` : ''}
         ${product.stock ? `
@@ -2068,7 +2210,7 @@ function renderGrid() {
     const bg = escapeHTML(p.bg);
     const image = escapeHTML(p.image || '');
     const emoji = escapeHTML(p.emoji || '');
-    const price = escapeHTML(p.internalPriceText || (p.internalPrice ? `¥${p.internalPrice}/瓶` : ''));
+    const price = escapeHTML(p.internalPriceText || (p.internalPrice ? `¥${p.internalPrice}` : ''));
     return `
       <div class="product-card${selected ? ' selected' : ''}" data-id="${id}"
            role="listitem" tabindex="0" aria-label="${name} — ${desc}"${selectedAttr}>
