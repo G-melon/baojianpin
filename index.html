@@ -1525,13 +1525,13 @@ body.welcome-active {
 <section class="welcome-screen" id="welcomeScreen" aria-label="保健品销售商城简介">
   <div class="welcome-content">
     <div class="welcome-copy">
-      <div class="welcome-kicker">家庭内购 · 小竹售价</div>
+      <div class="welcome-kicker">家庭内购 · 内购价</div>
       <h2 class="welcome-title">保健品家庭内购平台</h2>
       <p class="welcome-intro">
         精选鱼油、益生菌、维生素矿物质、护胃护肝和美容养护产品，集中查看图片、功效、服用细节、库存与生产日期，方便一家人快速筛选下单。
       </p>
       <div class="welcome-highlights" aria-label="平台特点">
-        <div class="welcome-highlight"><strong>小竹售价</strong><span>价格按最新清单展示</span></div>
+        <div class="welcome-highlight"><strong>内购价</strong><span>价格按最新表格更新</span></div>
         <div class="welcome-highlight"><strong>按需筛选</strong><span>按品类查看适合产品</span></div>
         <div class="welcome-highlight"><strong>一键下单</strong><span>选择数量后提交清单</span></div>
       </div>
@@ -1549,7 +1549,7 @@ body.welcome-active {
         <img src="/uploads/products/高含量辅酶q10软胶囊.png" alt="">
         <span>辅酶 Q10</span>
       </div>
-      <div class="welcome-badge">扫码进平台 · 查看小竹售价</div>
+      <div class="welcome-badge">扫码进平台 · 查看最新内购价</div>
     </div>
   </div>
   <button class="welcome-enter" id="welcomeEnter" type="button">进入商城</button>
@@ -2071,7 +2071,7 @@ function renderProductDetail(product, activeImage = null, selectedCardOption = n
             </div>
           </div>
           <div>
-            ${priceText ? `<div class="detail-section-title">小竹售价</div><div class="detail-price">${escapeHTML(priceText)}</div>` : ''}
+            ${priceText ? `<div class="detail-section-title">内购价</div><div class="detail-price">${escapeHTML(priceText)}</div>` : ''}
             <div class="detail-spec-grid">${specRows}</div>
             ${efficacyCopy ? `<div class="detail-section-title">功效</div><div class="detail-copy">${escapeHTML(efficacyCopy)}</div>` : ''}
             ${usageCopy ? `<div class="detail-section-title">服用细节</div><div class="detail-copy">${escapeHTML(usageCopy)}</div>` : ''}
@@ -2093,7 +2093,7 @@ function renderProductDetail(product, activeImage = null, selectedCardOption = n
         </div>
         ${priceText ? `
         <div class="detail-order-row">
-          <span>小竹售价</span>
+          <span>内购价</span>
           <span class="detail-order-value">${escapeHTML(priceText)}</span>
         </div>` : ''}
         ${product.stock ? `
