@@ -9,7 +9,6 @@ import os
 import sys
 import uuid
 import io
-import zipfile
 import threading
 import re
 import secrets
@@ -621,35 +620,6 @@ def export_orders_xlsx():
     filename = f'保健品{label}_{suffix}_{datetime.now().strftime("%Y%m%d")}.xlsx'
     return send_file(output, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                      as_attachment=True, download_name=filename)
-
-@app.route('/api/orders/export-package', methods=['GET'])
-def export_orders_package():
-    """一次下载两份：账单 + 不含价格商品清单。"""
-    if not check_admin():
-        return jsonify({"error":"未授权"}), 401
-
-    filtered, name_filter, order_no = filtered_orders_from_request()
-    if not filtered:
-        return jsonify({"error":"当前筛选无订单"}), 404
-
-    bill_wb, customer_orders = build_orders_workbook(filtered, include_prices=True)
-    list_wb, _ = build_orders_workbook(filtered, include_prices=False)
-
-    if order_no:
-        cust = next(iter(customer_orders.keys()))
-        suffix = f'{cust}_{order_no}'
-    else:
-        suffix = name_filter or '全部'
-    today = datetime.now().strftime("%Y%m%d")
-
-    package = io.BytesIO()
-    with zipfile.ZipFile(package, 'w', compression=zipfile.ZIP_DEFLATED) as zf:
-        zf.writestr(f'保健品账单_{suffix}_{today}.xlsx', workbook_bytes(bill_wb).getvalue())
-        zf.writestr(f'保健品商品清单_{suffix}_{today}.xlsx', workbook_bytes(list_wb).getvalue())
-    package.seek(0)
-
-    filename = f'保健品订单资料_{suffix}_{today}.zip'
-    return send_file(package, mimetype='application/zip', as_attachment=True, download_name=filename)
 
 # ========== Admin 鉴权 ==========
 @app.route('/api/admin/state', methods=['GET'])
