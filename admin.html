@@ -204,6 +204,33 @@ button, input, textarea, select { font-family: SimSun, 'Songti SC', 'Noto Serif 
   padding: 4px 10px;
   font-size: 0.7rem;
 }
+.order-export-actions {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+.order-export-icon {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.order-export-icon svg {
+  width: 14px;
+  height: 14px;
+  display: block;
+}
+.order-export-icon.bill {
+  color: var(--red);
+  border-color: rgba(166, 26, 46, 0.36);
+}
+.order-export-icon.list {
+  color: #2F6F5E;
+  border-color: rgba(47, 111, 94, 0.34);
+}
 /* ========== Modal ========== */
 .modal-overlay {
   position: fixed; inset: 0; z-index: 100;
@@ -502,7 +529,7 @@ button, input, textarea, select { font-family: SimSun, 'Songti SC', 'Noto Serif 
       <table class="order-table">
         <thead>
           <tr>
-            <th>#</th><th>下单人</th><th>电话</th><th>邮箱</th><th>日期</th><th>商品</th><th style="text-align:center">数量</th><th>状态</th><th>订单编号</th><th style="text-align:center;width:56px">详情</th><th style="text-align:center;width:96px">导出</th>
+            <th>#</th><th>下单人</th><th>电话</th><th>邮箱</th><th>日期</th><th>商品</th><th style="text-align:center">数量</th><th>状态</th><th>订单编号</th><th style="text-align:center;width:56px">详情</th><th style="text-align:center;width:96px">下载</th>
           </tr>
         </thead>
         <tbody id="orderTbody"></tbody>
@@ -861,7 +888,7 @@ function renderOrders() {
         ${isFirstOfOrder ? `<button class="btn btn-outline btn-sm order-detail-btn" data-order-no="${escapeHTML(r.orderNo)}" title="查看订单详情">详情</button>` : ''}
       </td>
       <td style="text-align:center">
-        ${isFirstOfOrder ? `<div style="display:flex;gap:4px;justify-content:center"><button class="btn btn-outline btn-sm" onclick="exportSingleOrder('${r.orderNo}', 'bill')" title="导出账单" style="padding:4px 8px;font-size:0.7rem">账单</button><button class="btn btn-outline btn-sm" onclick="exportSingleOrder('${r.orderNo}', 'list')" title="导出商品清单" style="padding:4px 8px;font-size:0.7rem">清单</button></div>` : ''}
+        ${isFirstOfOrder ? `<div class="order-export-actions"><button class="btn btn-outline btn-sm order-export-icon list" onclick="exportSingleOrder('${r.orderNo}', 'list')" title="下载商品清单" aria-label="下载商品清单"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg></button><button class="btn btn-outline btn-sm order-export-icon bill" onclick="exportSingleOrder('${r.orderNo}', 'bill')" title="下载价格账单" aria-label="下载价格账单"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg></button></div>` : ''}
       </td>
     </tr>
   `}).join('');
