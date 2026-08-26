@@ -245,8 +245,6 @@ def add_product():
         "usage": data.get('usage', ''),
         "internalPrice": data.get('internalPrice', ''),
         "internalPriceText": data.get('internalPriceText', ''),
-        "productionDate": data.get('productionDate', ''),
-        "stock": data.get('stock', ''),
         "details": data.get('details', []),
         "usageDetails": data.get('usageDetails', []),
         "specs": data.get('specs', {}),
@@ -272,7 +270,7 @@ def update_product(product_id):
     def _update(products):
         for p in products:
             if p['id'] == product_id:
-                for k in ('name','cat','desc','emoji','bg','tags','image','images','efficacy','usage','internalPrice','internalPriceText','productionDate','stock','details','usageDetails','specs','cardCount','cardOptions','productOptionText','productOptions'):
+                for k in ('name','cat','desc','emoji','bg','tags','image','images','efficacy','usage','internalPrice','internalPriceText','details','usageDetails','specs','cardCount','cardOptions','productOptionText','productOptions'):
                     if k in data: p[k] = data[k]
                 normalize_product(p)
                 return products, p

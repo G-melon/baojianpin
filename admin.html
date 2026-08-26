@@ -564,14 +564,6 @@ button, input, textarea, select { font-family: SimSun, 'Songti SC', 'Noto Serif 
       <input type="number" id="editInternalPrice" placeholder="例如：88" min="0" step="0.01">
     </div>
     <div class="form-group">
-      <label>生产日期</label>
-      <input type="date" id="editProductionDate">
-    </div>
-    <div class="form-group">
-      <label>库存</label>
-      <input type="text" id="editStock" placeholder="例如：100 或 绿茶370、白桃420" maxlength="80">
-    </div>
-    <div class="form-group">
       <label>规格选项</label>
       <input type="text" id="editCardCount" placeholder="例如：60片、120片、30袋" maxlength="80">
       <p style="font-size:0.72rem;color:var(--text-subtle);margin-top:4px">多个选项用顿号、逗号或分号隔开，客户下单时可选择。</p>
@@ -1054,8 +1046,6 @@ function populateForm(product = null) {
   document.getElementById('editEfficacy').value = product?.efficacy || (product?.details || []).join('\n') || '';
   document.getElementById('editUsage').value = product?.usage || (product?.usageDetails || []).join('\n') || '';
   document.getElementById('editInternalPrice').value = product?.internalPrice ?? '';
-  document.getElementById('editProductionDate').value = product?.productionDate || '';
-  document.getElementById('editStock').value = product?.stock || '';
   document.getElementById('editCardCount').value = (product?.cardOptions || []).length ? product.cardOptions.join('、') : (product?.cardCount || '');
   document.getElementById('editProductOptions').value = (product?.productOptions || []).length ? product.productOptions.join('、') : (product?.productOptionText || '');
   document.getElementById('editBg').value = product?.bg || 'red-bg';
@@ -1130,8 +1120,6 @@ document.getElementById('btnSaveProduct').addEventListener('click', async functi
   const internalPriceRaw = document.getElementById('editInternalPrice').value.trim();
   const internalPrice = internalPriceRaw === '' ? '' : Number(internalPriceRaw);
   const internalPriceText = internalPriceRaw === '' ? '' : `¥${internalPriceRaw}`;
-  const productionDate = document.getElementById('editProductionDate').value;
-  const stock = document.getElementById('editStock').value.trim();
   const details = efficacy.split(/\n+/).map(v => v.trim()).filter(Boolean);
   const usageDetails = usage.split(/\n+/).map(v => v.trim()).filter(Boolean);
   const data = {
@@ -1141,16 +1129,12 @@ document.getElementById('btnSaveProduct').addEventListener('click', async functi
     usage,
     internalPrice,
     internalPriceText,
-    productionDate,
-    stock,
     details,
     usageDetails,
     specs: {
       商品名称: name,
       规格: cardOptions[0] || '',
-      内购价: internalPriceText,
-      生产日期: productionDate,
-      库存: stock
+      内购价: internalPriceText
     },
     cardCount: cardOptions.join('、'),
     cardOptions,

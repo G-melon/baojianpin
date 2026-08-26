@@ -17,8 +17,6 @@
     "usage": "2粒/天\n随餐服用",
     "internalPrice": 160,
     "internalPriceText": "¥160",
-    "productionDate": "2026-01-04",
-    "stock": "100",
     "code": "NG-001",
     "cardCount": "60粒/瓶",
     "cardOptions": [
@@ -29,8 +27,6 @@
     "specs": {
       "商品名称": "爱塔馨安®鱼油软胶囊",
       "规格": "60粒/瓶",
-      "生产日期": "2026-01-04",
-      "库存": "100",
       "内购价": "¥160"
     },
     "details": [
@@ -63,12 +59,10 @@
     "images": [
       "/uploads/products/新版-维生素AD软胶囊.jpg"
     ],
-    "efficacy": "每粒含维生素A 280μg、维生素D₃ 8.0μg，科学配比，补充每日所需✅\n蓝帽子备案所剩库存\n规格：60粒/瓶",
+    "efficacy": "每粒含维生素A 280μg、维生素D₃ 8.0μg，科学配比，补充每日所需✅\n规格：60粒/瓶",
     "usage": "1粒/天",
     "internalPrice": 35,
     "internalPriceText": "¥35",
-    "productionDate": "2026-04-15",
-    "stock": "80",
     "code": "NG-002",
     "cardCount": "60粒/瓶",
     "cardOptions": [
@@ -79,13 +73,10 @@
     "specs": {
       "商品名称": "维生素AD软胶囊",
       "规格": "60粒/瓶",
-      "生产日期": "2026-04-15",
-      "库存": "80",
       "内购价": "¥35"
     },
     "details": [
       "每粒含维生素A 280μg、维生素D₃ 8.0μg，科学配比，补充每日所需✅",
-      "蓝帽子备案所剩库存",
       "规格：60粒/瓶"
     ],
     "usageDetails": [
@@ -110,8 +101,6 @@
     "usage": "1-2粒/天\n随餐服用",
     "internalPrice": 25,
     "internalPriceText": "¥25",
-    "productionDate": "2026-05-18",
-    "stock": "0",
     "code": "NG-003",
     "cardCount": "30粒/瓶",
     "cardOptions": [
@@ -122,8 +111,6 @@
     "specs": {
       "商品名称": "磷脂酰丝氨酸DHA藻油凝胶糖果",
       "规格": "30粒/瓶",
-      "生产日期": "2026-05-18",
-      "库存": "0",
       "内购价": "¥25"
     },
     "details": [
@@ -157,8 +144,6 @@
     "usage": "大人2粒/天\n小孩1粒/天\n随餐服用",
     "internalPrice": 125,
     "internalPriceText": "¥125",
-    "productionDate": "2026-06-16",
-    "stock": "160",
     "code": "NG-004",
     "cardCount": "180粒/瓶",
     "cardOptions": [
@@ -169,8 +154,6 @@
     "specs": {
       "商品名称": "钙维生素D维生素K",
       "规格": "180粒/瓶",
-      "生产日期": "2026-06-16",
-      "库存": "160",
       "内购价": "¥125"
     },
     "details": [
@@ -201,8 +184,6 @@
     "usage": "大人2粒/天\n小孩1粒/天\n随餐服用",
     "internalPrice": 69,
     "internalPriceText": "¥69",
-    "productionDate": "2026-06-16",
-    "stock": "70",
     "code": "NG-005",
     "cardCount": "60粒/瓶",
     "cardOptions": [
@@ -213,8 +194,6 @@
     "specs": {
       "商品名称": "钙维生素D维生素K",
       "规格": "60粒/瓶",
-      "生产日期": "2026-06-16",
-      "库存": "70",
       "内购价": "¥69"
     },
     "details": [
@@ -245,8 +224,6 @@
     "usage": "100条/袋",
     "internalPrice": 198,
     "internalPriceText": "¥198",
-    "productionDate": "2026-06-09",
-    "stock": "2300",
     "code": "NG-006",
     "cardCount": "2g/条",
     "cardOptions": [
@@ -257,8 +234,6 @@
     "specs": {
       "商品名称": "呼吸道免疫益生菌",
       "规格": "2g/条",
-      "生产日期": "2026-06-09",
-      "库存": "2300",
       "内购价": "¥198"
     },
     "details": [
@@ -290,8 +265,6 @@
     "usage": "100条/袋",
     "internalPrice": 230,
     "internalPriceText": "¥230",
-    "productionDate": "2026-07-01",
-    "stock": "4300",
     "code": "NG-007",
     "cardCount": "2g/条",
     "cardOptions": [
@@ -302,8 +275,6 @@
     "specs": {
       "商品名称": "女性益生菌",
       "规格": "2g/条",
-      "生产日期": "2026-07-01",
-      "库存": "4300",
       "内购价": "¥230"
     },
     "details": [
@@ -334,8 +305,6 @@
     "usage": "每次1片，含服2分钟以上",
     "internalPrice": 19.9,
     "internalPriceText": "¥19.9",
-    "productionDate": "2026-06-08",
-    "stock": "绿茶370\n白桃420",
     "code": "NG-008",
     "cardCount": "0.6g/片",
     "cardOptions": [
@@ -346,8 +315,6 @@
     "specs": {
       "商品名称": "口腔益生菌",
       "规格": "0.6g/片",
-      "生产日期": "2026-06-08",
-      "库存": "绿茶370\n白桃420",
       "内购价": "¥19.9"
     },
     "details": [
@@ -377,8 +344,6 @@
     "usage": "2条/天\n100条/袋",
     "internalPrice": 150,
     "internalPriceText": "¥150",
-    "productionDate": "2026-06-24",
-    "stock": "80盒",
     "code": "NG-009",
     "cardCount": "6g/条",
     "cardOptions": [
@@ -389,8 +354,6 @@
     "specs": {
       "商品名称": "胶原蛋白",
       "规格": "6g/条",
-      "生产日期": "2026-06-24",
-      "库存": "80盒",
       "内购价": "¥150"
     },
     "details": [
@@ -427,8 +390,6 @@
     "usage": "100条/袋",
     "internalPrice": 230,
     "internalPriceText": "¥230",
-    "productionDate": "2026-06-28",
-    "stock": "400",
     "code": "NG-010",
     "cardCount": "8-10g/条",
     "cardOptions": [
@@ -439,8 +400,6 @@
     "specs": {
       "商品名称": "比利时Sensus菊粉",
       "规格": "8-10g/条",
-      "生产日期": "2026-06-28",
-      "库存": "400",
       "内购价": "¥230"
     },
     "details": [
@@ -470,8 +429,6 @@
     "usage": "4粒/天\n随餐服用",
     "internalPrice": 55,
     "internalPriceText": "¥55",
-    "productionDate": "2026-06-01",
-    "stock": "2700",
     "code": "NG-011",
     "cardCount": "60粒/瓶",
     "cardOptions": [
@@ -482,8 +439,6 @@
     "specs": {
       "商品名称": "爱塔馨安®辅酶Q10软胶囊",
       "规格": "60粒/瓶",
-      "生产日期": "2026-06-01",
-      "库存": "2700",
       "内购价": "¥55"
     },
     "details": [
@@ -517,8 +472,6 @@
     "usage": "100条/袋",
     "internalPrice": 230,
     "internalPriceText": "¥230",
-    "productionDate": "2026-07-01",
-    "stock": "830",
     "code": "NG-012",
     "cardCount": "2g/袋",
     "cardOptions": [
@@ -529,8 +482,6 @@
     "specs": {
       "商品名称": "睡眠益生菌",
       "规格": "2g/袋",
-      "生产日期": "2026-07-01",
-      "库存": "830",
       "内购价": "¥230"
     },
     "details": [
@@ -560,8 +511,6 @@
     "usage": "2粒/天\n500mg BCM95/天",
     "internalPrice": 98,
     "internalPriceText": "¥98",
-    "productionDate": "2026-07-01",
-    "stock": "450",
     "code": "NG-013",
     "cardCount": "60粒/瓶",
     "cardOptions": [
@@ -572,8 +521,6 @@
     "specs": {
       "商品名称": "BCM95姜黄美藤果油凝胶糖果",
       "规格": "60粒/瓶",
-      "生产日期": "2026-07-01",
-      "库存": "450",
       "内购价": "¥98"
     },
     "details": [
@@ -604,8 +551,6 @@
     "usage": "100条/袋",
     "internalPrice": 230,
     "internalPriceText": "¥230",
-    "productionDate": "2026-07-01",
-    "stock": "760",
     "code": "NG-014",
     "cardCount": "2g/袋",
     "cardOptions": [
@@ -616,8 +561,6 @@
     "specs": {
       "商品名称": "抗幽门益生菌",
       "规格": "2g/袋",
-      "生产日期": "2026-07-01",
-      "库存": "760",
       "内购价": "¥230"
     },
     "details": [
@@ -647,8 +590,6 @@
     "usage": "2粒/天\n200mg 辅酶Q10/天",
     "internalPrice": 165,
     "internalPriceText": "¥165",
-    "productionDate": "2026-07-01",
-    "stock": "110",
     "code": "NG-015",
     "cardCount": "60粒/瓶",
     "cardOptions": [
@@ -659,8 +600,6 @@
     "specs": {
       "商品名称": "高含量辅酶Q10软胶囊",
       "规格": "60粒/瓶",
-      "生产日期": "2026-07-01",
-      "库存": "110",
       "内购价": "¥165"
     },
     "details": [
