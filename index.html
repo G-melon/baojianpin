@@ -503,6 +503,21 @@ body.welcome-active {
   line-height: 1.5;
   font-weight: 400;
 }
+.card-spec {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 0 8px;
+  padding: 4px 9px;
+  border-radius: var(--radius-sm);
+  background: #F7EFE6;
+  color: var(--color-primary-deep);
+  border: 1px solid #E6D8C8;
+  font-size: 0.74rem;
+  line-height: 1.35;
+  font-weight: 700;
+}
 .card-tags { display: flex; flex-wrap: wrap; gap: 5px; }
 .card-badge {
   display: inline-block;
@@ -1455,6 +1470,7 @@ body.welcome-active {
   .card-body { padding: 10px 12px; }
   .card-name { font-size: 0.86rem; }
   .card-desc { font-size: 0.72rem; margin-bottom: 6px; }
+  .card-spec { font-size: 0.66rem; padding: 3px 7px; margin-bottom: 6px; }
   .card-tags .card-badge { font-size: 0.65rem; padding: 2px 8px; }
   .card-qty-row { margin-top: 6px; gap: 8px; }
   .qty-btn { width: 32px; height: 32px; min-width: 32px; min-height: 32px; font-size: 1.1rem; }
@@ -2211,6 +2227,7 @@ function renderGrid() {
     const image = escapeHTML(p.image || '');
     const emoji = escapeHTML(p.emoji || '');
     const price = escapeHTML(p.internalPriceText || (p.internalPrice ? `¥${p.internalPrice}` : ''));
+    const spec = escapeHTML(p.cardCount || '');
     return `
       <div class="product-card${selected ? ' selected' : ''}" data-id="${id}"
            role="listitem" tabindex="0" aria-label="${name} — ${desc}"${selectedAttr}>
@@ -2224,6 +2241,7 @@ function renderGrid() {
           <div class="card-name">${name}</div>
           <div class="card-desc">${desc}</div>
           ${price ? `<div class="card-price">${price}</div>` : ''}
+          ${spec ? `<div class="card-spec">规格：${spec}</div>` : ''}
           <div class="card-tags">
             ${p.cat ? `<span class="card-badge">${escapeHTML(p.cat)}</span>` : ''}
             ${(p.tags||[]).map(t => `<span class="card-badge">${escapeHTML(t)}</span>`).join(' ')}
