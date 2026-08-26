@@ -9,6 +9,7 @@ import os
 import sys
 import uuid
 import io
+import zipfile
 import threading
 import re
 import secrets
@@ -395,14 +396,7 @@ def clear_orders():
     return jsonify({"ok":True})
 
 # ========== XLSX 导出 ==========
-# 模板：data 行为 2 行合并块，列 A:B 商品名称 / C 规格 / D 数量 / E:F 单位 / G:H 单价 / I 金额。
-# 保健品家庭内购平台约束「全程不显示价格」→ 单价/金额单元格留空，仅保留模板列结构。
-@app.route('/api/orders/export-xlsx', methods=['GET'])
-def export_orders_xlsx():
-    """按客户分 sheet 导出 XLSX，格式对照 5月6日发货明细表-2026年.xlsx"""
-    if not check_admin():
-        return jsonify({"error":"未授权"}), 401
-
+def filtered_orders_from_request():
     orders = load_json(ORDERS_FILE, [])
     name_filter = request.args.get('name', '').strip().lower()
     date_from = request.args.get('from', '')
@@ -420,15 +414,39 @@ def export_orders_xlsx():
         if date_to and o['date'] > date_to.replace('-', '/'):
             continue
         filtered.append(o)
+    return filtered, name_filter, order_no
 
-    if not filtered:
-        return jsonify({"error":"当前筛选无订单"}), 404
-
+def build_orders_workbook(filtered, include_prices=False):
     # 按客户分组（保持订单原顺序）
     customer_orders = {}
     for o in filtered:
         name = o['customerName']
         customer_orders.setdefault(name, []).append(o)
+
+    products = load_json(PRODUCTS_FILE, [])
+    product_lookup = {}
+    for product in products:
+        product_lookup[str(product.get('id', ''))] = product
+        product_lookup[str(product.get('name', ''))] = product
+
+    def item_unit_price(item):
+        raw = item.get('internalPrice', item.get('price', ''))
+        if raw in ('', None):
+            product = product_lookup.get(str(item.get('id', ''))) or product_lookup.get(str(item.get('name', '')))
+            raw = product.get('internalPrice', '') if product else ''
+        try:
+            return float(raw)
+        except (TypeError, ValueError):
+            return None
+
+    def numeric_qty(item):
+        try:
+            return float(item.get('qty', 0))
+        except (TypeError, ValueError):
+            return 0
+
+    def format_amount(value):
+        return str(int(value)) if float(value).is_integer() else f'{value:.2f}'
 
     wb = Workbook()
     wb.remove(wb.active)
@@ -492,7 +510,12 @@ def export_orders_xlsx():
         ws.merge_cells('G5:I6')
         ws['A5'] = '快递/物流：\n单号：'
         ws['A5'].font = info_font; ws['A5'].alignment = left_wrap
-        ws['G5'] = '总金额：'
+        customer_total = sum(
+            (item_unit_price(item) or 0) * numeric_qty(item)
+            for order in cust_orders
+            for item in order.get('items', [])
+        )
+        ws['G5'] = f'总金额：¥{format_amount(customer_total)}' if include_prices else ''
         ws['G5'].font = info_font; ws['G5'].alignment = left_wrap
         ws.row_dimensions[5].height = 22
         ws.row_dimensions[6].height = 22
@@ -505,7 +528,10 @@ def export_orders_xlsx():
         ws.merge_cells('E7:F8')
         ws.merge_cells('G7:H8')
         ws.merge_cells('I7:I8')
-        for col, txt in [(1,'商品名称'),(3,'规格'),(4,'数量'),(5,'单位'),(7,'单价'),(9,'金额')]:
+        headings = [(1,'商品名称'),(3,'规格'),(4,'数量'),(5,'单位')]
+        if include_prices:
+            headings += [(7,'单价'),(9,'金额')]
+        for col, txt in headings:
             c = ws.cell(row=7, column=col, value=txt)
             c.font = head_font; c.alignment = center_wrap
         ws.row_dimensions[7].height = 22
@@ -527,10 +553,22 @@ def export_orders_xlsx():
 
             if i < len(all_items):
                 item = all_items[i]
+                unit_price = item_unit_price(item) if include_prices else None
+                qty = item.get('qty','')
                 ws.cell(row=r, column=1, value=item.get('name','')).font = body_font
                 ws.cell(row=r, column=1).alignment = center_wrap
-                ws.cell(row=r, column=4, value=item.get('qty','')).font = body_font
+                ws.cell(row=r, column=3, value=item.get('cardCount','')).font = body_font
+                ws.cell(row=r, column=3).alignment = center_wrap
+                ws.cell(row=r, column=4, value=qty).font = body_font
                 ws.cell(row=r, column=4).alignment = center_wrap
+                ws.cell(row=r, column=5, value='件').font = body_font
+                ws.cell(row=r, column=5).alignment = center_wrap
+                if unit_price is not None:
+                    amount = unit_price * numeric_qty(item)
+                    ws.cell(row=r, column=7, value=unit_price).font = body_font
+                    ws.cell(row=r, column=7).alignment = center_wrap
+                    ws.cell(row=r, column=9, value=amount).font = body_font
+                    ws.cell(row=r, column=9).alignment = center_wrap
             ws.row_dimensions[r].height = 20
             ws.row_dimensions[r+1].height = 20
             r += 2
@@ -550,18 +588,68 @@ def export_orders_xlsx():
         ws.print_options.horizontalCentered = True
         ws.print_area = f'A1:I{r-1}'
 
+    return wb, customer_orders
+
+def workbook_bytes(wb):
     output = io.BytesIO()
     wb.save(output)
     output.seek(0)
+    return output
+
+# 模板：data 行为 2 行合并块，列 A:B 商品名称 / C 规格 / D 数量 / E:F 单位 / G:H 单价 / I 金额。
+@app.route('/api/orders/export-xlsx', methods=['GET'])
+def export_orders_xlsx():
+    """按客户分 sheet 导出单份 XLSX。mode=bill 为账单，mode=list 为不含价格商品清单。"""
+    if not check_admin():
+        return jsonify({"error":"未授权"}), 401
+
+    filtered, name_filter, order_no = filtered_orders_from_request()
+    if not filtered:
+        return jsonify({"error":"当前筛选无订单"}), 404
+
+    mode = request.args.get('mode', 'list').strip().lower()
+    include_prices = mode == 'bill'
+    wb, customer_orders = build_orders_workbook(filtered, include_prices=include_prices)
+    output = workbook_bytes(wb)
 
     if order_no:
         cust = next(iter(customer_orders.keys()))
         suffix = f'{cust}_{order_no}'
     else:
         suffix = name_filter or '全部'
-    filename = f'保健品发货明细_{suffix}_{datetime.now().strftime("%Y%m%d")}.xlsx'
+    label = '账单' if include_prices else '商品清单'
+    filename = f'保健品{label}_{suffix}_{datetime.now().strftime("%Y%m%d")}.xlsx'
     return send_file(output, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                      as_attachment=True, download_name=filename)
+
+@app.route('/api/orders/export-package', methods=['GET'])
+def export_orders_package():
+    """一次下载两份：账单 + 不含价格商品清单。"""
+    if not check_admin():
+        return jsonify({"error":"未授权"}), 401
+
+    filtered, name_filter, order_no = filtered_orders_from_request()
+    if not filtered:
+        return jsonify({"error":"当前筛选无订单"}), 404
+
+    bill_wb, customer_orders = build_orders_workbook(filtered, include_prices=True)
+    list_wb, _ = build_orders_workbook(filtered, include_prices=False)
+
+    if order_no:
+        cust = next(iter(customer_orders.keys()))
+        suffix = f'{cust}_{order_no}'
+    else:
+        suffix = name_filter or '全部'
+    today = datetime.now().strftime("%Y%m%d")
+
+    package = io.BytesIO()
+    with zipfile.ZipFile(package, 'w', compression=zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr(f'保健品账单_{suffix}_{today}.xlsx', workbook_bytes(bill_wb).getvalue())
+        zf.writestr(f'保健品商品清单_{suffix}_{today}.xlsx', workbook_bytes(list_wb).getvalue())
+    package.seek(0)
+
+    filename = f'保健品订单资料_{suffix}_{today}.zip'
+    return send_file(package, mimetype='application/zip', as_attachment=True, download_name=filename)
 
 # ========== Admin 鉴权 ==========
 @app.route('/api/admin/state', methods=['GET'])

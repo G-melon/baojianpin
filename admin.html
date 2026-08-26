@@ -492,7 +492,7 @@ button, input, textarea, select { font-family: SimSun, 'Songti SC', 'Noto Serif 
       </select>
       <div style="flex:1"></div>
       <div style="display:flex;gap:6px;flex-shrink:0">
-        <button class="btn btn-outline btn-sm" id="btnExportCSV"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="vertical-align:middle;margin-right:4px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>导出 XLSX</button>
+        <button class="btn btn-outline btn-sm" id="btnExportCSV"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="vertical-align:middle;margin-right:4px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>导出清单</button>
         <button class="btn btn-danger btn-sm" id="btnClearOrders"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="vertical-align:middle;margin-right:4px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>清空订单</button>
       </div>
     </div>
@@ -1263,7 +1263,7 @@ document.getElementById('searchProducts').addEventListener('input', function() {
 /* ================================================================
    EXPORT XLSX
    ================================================================ */
-async function downloadXlsx(url, fallbackName) {
+async function downloadFile(url, fallbackName) {
   let res;
   try {
     res = await api(url);
@@ -1301,9 +1301,9 @@ document.getElementById('btnExportCSV').addEventListener('click', async () => {
   if (dateFrom) params.set('from', dateFrom);
   if (dateTo) params.set('to', dateTo);
   const today = new Date().toISOString().slice(0,10);
-  await downloadXlsx('/api/orders/export-xlsx?' + params.toString(),
-                     `保健品发货明细_${nameFilter || '全部'}_${today}.xlsx`);
-  toast('已导出 XLSX（按客户分 Sheet）');
+  await downloadFile('/api/orders/export-package?' + params.toString(),
+                     `保健品订单资料_${nameFilter || '全部'}_${today}.zip`);
+  toast('已导出账单和商品清单');
 });
 // 搜索 & 日期筛选实时刷新
 document.getElementById('orderSearchName').addEventListener('input', renderOrders);
@@ -1314,9 +1314,9 @@ document.getElementById('orderStatusFilter').addEventListener('change', renderOr
 async function exportSingleOrder(orderNo) {
   const order = orders.find(o => o.orderNo === orderNo);
   if (!order) { toast('订单不存在'); return; }
-  await downloadXlsx(`/api/orders/export-xlsx?orderNo=${encodeURIComponent(orderNo)}`,
-                     `保健品发货明细_${order.customerName}_${order.orderNo}.xlsx`);
-  toast(`已导出 XLSX：${order.customerName}（${order.orderNo}）`);
+  await downloadFile(`/api/orders/export-package?orderNo=${encodeURIComponent(orderNo)}`,
+                     `保健品订单资料_${order.customerName}_${order.orderNo}.zip`);
+  toast(`已导出账单和商品清单：${order.customerName}（${order.orderNo}）`);
 }
 /* ================================================================
    CLEAR ORDERS

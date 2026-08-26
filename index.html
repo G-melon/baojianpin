@@ -2408,12 +2408,13 @@ function renderMobileModal() {
 /* ================================================================
    DOWNLOAD / PRINT
    ================================================================ */
-function generateOrderHTML(customerName = '', customerPhone = '', customerEmail = '') {
+function generateOrderHTML(customerName = '', customerPhone = '', customerEmail = '', includePrices = false, title = '商品清单', orderNoOverride = '') {
   const entries = getCartEntries();
   const now = new Date();
   const pad = n => String(n).padStart(2,'0');
   const dateStr = `${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()}`;
-  const orderNo = 'HP' + now.getFullYear() + pad(now.getMonth()+1) + pad(now.getDate()) + pad(now.getHours()) + pad(now.getMinutes()) + pad(now.getSeconds());
+  const orderNo = orderNoOverride || 'HP' + now.getFullYear() + pad(now.getMonth()+1) + pad(now.getDate()) + pad(now.getHours()) + pad(now.getMinutes()) + pad(now.getSeconds());
+  const priceOf = e => Number(e.internalPrice || 0);
   const rows = entries.map((e, i) => `
     <tr>
       <td>${i+1}</td>
@@ -2422,14 +2423,16 @@ function generateOrderHTML(customerName = '', customerPhone = '', customerEmail 
       <td>${escapeHTML(e.cardOption || '')}</td>
       <td>${escapeHTML(e.productOption || '')}</td>
       <td style="text-align:center">${e.qty}</td>
+      ${includePrices ? `<td style="text-align:right">¥${priceOf(e).toFixed(priceOf(e) % 1 === 0 ? 0 : 2)}</td><td style="text-align:right">¥${(priceOf(e) * e.qty).toFixed((priceOf(e) * e.qty) % 1 === 0 ? 0 : 2)}</td>` : ''}
     </tr>
   `).join('');
   const totalQty = entries.reduce((s, e) => s + e.qty, 0);
+  const totalAmount = entries.reduce((s, e) => s + priceOf(e) * e.qty, 0);
   return `
     <div style="max-width:750px;margin:0 auto;padding:32px 24px;font-family:SimSun, 'Songti SC', 'Noto Serif CJK SC', serif;color:#333;">
       <!-- 标题 -->
       <div style="text-align:center;margin-bottom:20px;">
-        <h1 style="font-size:1.8rem;font-weight:700;color:#333;letter-spacing:0.3em;margin:0;">发 货 单</h1>
+        <h1 style="font-size:1.8rem;font-weight:700;color:#333;letter-spacing:0.18em;margin:0;">${escapeHTML(title)}</h1>
         <div style="width:60px;height:3px;background:#8B1A2B;margin:8px auto 0;"></div>
       </div>
       <!-- 信息栏 -->
@@ -2461,6 +2464,7 @@ function generateOrderHTML(customerName = '', customerPhone = '', customerEmail 
             <th style="padding:10px 8px;text-align:left;">规格</th>
             <th style="padding:10px 8px;text-align:left;">选项</th>
             <th style="padding:10px 8px;text-align:center;width:60px;">数量</th>
+            ${includePrices ? '<th style="padding:10px 8px;text-align:right;width:80px;">单价</th><th style="padding:10px 8px;text-align:right;width:90px;">金额</th>' : ''}
           </tr>
         </thead>
         <tbody>
@@ -2473,6 +2477,7 @@ function generateOrderHTML(customerName = '', customerPhone = '', customerEmail 
               <td style="padding:10px 8px;"></td>
               <td style="padding:10px 8px;"></td>
               <td style="padding:10px 8px;text-align:center;"></td>
+              ${includePrices ? '<td style="padding:10px 8px;"></td><td style="padding:10px 8px;"></td>' : ''}
             </tr>
           `).join('')}
         </tbody>
@@ -2483,6 +2488,7 @@ function generateOrderHTML(customerName = '', customerPhone = '', customerEmail 
         <strong>${entries.length} 种</strong>
         <span style="margin:0 8px;">/</span>
         <strong style="font-size:1.1rem;">${totalQty} 件商品</strong>
+        ${includePrices ? `<span style="margin:0 8px;">/</span><strong style="font-size:1.1rem;color:#8B1A2B;">总金额 ¥${totalAmount.toFixed(totalAmount % 1 === 0 ? 0 : 2)}</strong>` : ''}
       </div>
       <!-- 签名区 -->
       <table style="width:100%;margin-top:30px;font-size:0.88rem;">
@@ -2497,7 +2503,7 @@ function generateOrderHTML(customerName = '', customerPhone = '', customerEmail 
       </table>
       <!-- 备注 -->
       <div style="margin-top:20px;padding:12px 16px;background:#f9f9f9;border-radius:4px;font-size:0.8rem;color:#888;">
-        <strong>备注：</strong>本单据不显示价格　|　请当面核对品种与数量　|　签字确认后生效
+        <strong>备注：</strong>${includePrices ? '账单含价格，请核对品种、数量与金额' : '商品清单不含价格，请当面核对品种与数量'}　|　签字确认后生效
       </div>
     </div>
   `;
@@ -2508,7 +2514,14 @@ function downloadOrder() {
     showToast('请先选择商品');
     return;
   }
-  $printContent.innerHTML = generateOrderHTML();
+  const now = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  const orderNo = 'HP' + now.getFullYear() + pad(now.getMonth()+1) + pad(now.getDate()) + pad(now.getHours()) + pad(now.getMinutes()) + pad(now.getSeconds());
+  $printContent.innerHTML = `
+    ${generateOrderHTML('', '', '', true, '账单', orderNo)}
+    <div style="break-before:page;page-break-before:always;"></div>
+    ${generateOrderHTML('', '', '', false, '商品清单', orderNo)}
+  `;
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
       window.print();
