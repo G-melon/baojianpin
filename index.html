@@ -1544,7 +1544,7 @@ body.welcome-active {
       <div class="welcome-kicker">家庭内购 · 内购价</div>
       <h2 class="welcome-title">保健品家庭内购平台</h2>
       <p class="welcome-intro">
-        精选鱼油、益生菌、维生素矿物质、护胃护肝和美容养护产品，集中查看图片、功效、成分、库存与生产日期，方便一家人快速筛选下单。
+        精选鱼油、益生菌、维生素矿物质、护胃护肝和美容养护产品，集中查看图片、规格、功效与成分，方便一家人快速筛选下单。
       </p>
       <div class="welcome-highlights" aria-label="平台特点">
         <div class="welcome-highlight"><strong>内购价</strong><span>价格按最新表格更新</span></div>
@@ -2111,16 +2111,6 @@ function renderProductDetail(product, activeImage = null, selectedCardOption = n
         <div class="detail-order-row">
           <span>内购价</span>
           <span class="detail-order-value">${escapeHTML(priceText)}</span>
-        </div>` : ''}
-        ${product.stock ? `
-        <div class="detail-order-row">
-          <span>库存</span>
-          <span class="detail-order-value">${escapeHTML(product.stock)}</span>
-        </div>` : ''}
-        ${product.productionDate ? `
-        <div class="detail-order-row">
-          <span>生产日期</span>
-          <span class="detail-order-value">${escapeHTML(product.productionDate)}</span>
         </div>` : ''}
         ${cardOptions.length ? `
         <div class="detail-order-row">
