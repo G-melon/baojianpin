@@ -498,15 +498,18 @@ def build_orders_workbook(filtered, include_prices=False):
         ws.merge_cells('A3:I4')
         phones = '、'.join(sorted({o.get('customerPhone', '') for o in cust_orders if o.get('customerPhone')}))
         emails = '、'.join(sorted({o.get('customerEmail', '') for o in cust_orders if o.get('customerEmail')}))
+        addresses = '、'.join(sorted({o.get('customerAddress', '') for o in cust_orders if o.get('customerAddress')}))
         contact_text = f'  总件数：{total_qty} 件     订单编号：{order_nos}'
         if phones:
             contact_text += f'     电话：{phones}'
         if emails:
             contact_text += f'     邮箱：{emails}'
+        if addresses:
+            contact_text += f'\n  收货地址：{addresses}'
         ws['A3'] = contact_text
         ws['A3'].font = info_font; ws['A3'].alignment = left_wrap
-        ws.row_dimensions[3].height = 22
-        ws.row_dimensions[4].height = 22
+        ws.row_dimensions[3].height = 28 if addresses else 22
+        ws.row_dimensions[4].height = 28 if addresses else 22
 
         # ---- Row 5-6: 物流信息 ----
         apply_border_block(ws, 5, 6, 1, 9)
