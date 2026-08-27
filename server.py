@@ -12,7 +12,9 @@ import io
 import threading
 import re
 import secrets
+import smtplib
 from datetime import datetime
+from email.message import EmailMessage
 from pathlib import Path
 from flask import Flask, request, jsonify, send_from_directory, send_file
 from openpyxl import Workbook
@@ -40,6 +42,9 @@ ADMIN_CREDENTIALS_FILE = DATA_DIR / 'admin_credentials.json'
 
 DATA_DIR.mkdir(exist_ok=True)
 UPLOAD_DIR.mkdir(exist_ok=True)
+
+def env_value(name, default=''):
+    return os.environ.get(name, default).strip()
 
 # ========== 初始产品数据 ==========
 # 保留产品管理框架，默认不预置任何商品。
@@ -184,6 +189,74 @@ def normalize_order(order):
     if order.get("status") not in ORDER_STATUSES:
         order["status"] = DEFAULT_ORDER_STATUS
     return order
+
+def format_order_notification(order):
+    lines = [
+        '保健品家庭内购平台有新订单',
+        '',
+        f'订单编号：{order.get("orderNo", "")}',
+        f'下单人：{order.get("customerName", "")}',
+        f'联系电话：{order.get("customerPhone", "")}',
+        f'收货地址：{order.get("customerAddress", "")}',
+        f'下单日期：{order.get("date", "")}',
+    ]
+    if order.get('customerEmail'):
+        lines.append(f'邮箱：{order.get("customerEmail")}')
+    if order.get('note'):
+        lines.extend(['', f'客户备注：{order.get("note")}'])
+    lines.extend(['', '商品明细：'])
+    total_qty = 0
+    total_amount = 0
+    for item in order.get('items', []):
+        qty = item.get('qty', 0) or 0
+        total_qty += qty
+        try:
+            price = float(item.get('internalPrice') or item.get('price') or 0)
+        except (TypeError, ValueError):
+            price = 0
+        total_amount += price * qty
+        spec = item.get('cardCount') or item.get('cardOption') or item.get('spec') or ''
+        option = item.get('productOption') or ''
+        detail = ' / '.join(str(v) for v in (spec, option) if v)
+        price_text = f'，单价¥{price:g}' if price else ''
+        lines.append(f'- {item.get("name", "")} x {qty}{price_text}' + (f'（{detail}）' if detail else ''))
+    lines.extend(['', f'总件数：{total_qty} 件'])
+    if total_amount:
+        lines.append(f'预估总金额：¥{total_amount:g}')
+    return '\n'.join(lines)
+
+def send_order_notification(order):
+    smtp_host = env_value('SMTP_HOST')
+    smtp_user = env_value('SMTP_USER')
+    smtp_password = os.environ.get('SMTP_PASSWORD', '')
+    notify_to = env_value('ORDER_NOTIFY_TO') or env_value('SMTP_TO')
+    if not (smtp_host and smtp_user and smtp_password and notify_to):
+        return
+
+    smtp_port = int(env_value('SMTP_PORT', '465') or 465)
+    smtp_from = env_value('SMTP_FROM') or smtp_user
+    subject = f'新订单：{order.get("customerName", "")} {order.get("orderNo", "")}'
+    message = EmailMessage()
+    message['Subject'] = subject
+    message['From'] = smtp_from
+    message['To'] = notify_to
+    message.set_content(format_order_notification(order))
+
+    def _send():
+        try:
+            if smtp_port == 465:
+                with smtplib.SMTP_SSL(smtp_host, smtp_port, timeout=10) as server:
+                    server.login(smtp_user, smtp_password)
+                    server.send_message(message)
+            else:
+                with smtplib.SMTP(smtp_host, smtp_port, timeout=10) as server:
+                    server.starttls()
+                    server.login(smtp_user, smtp_password)
+                    server.send_message(message)
+        except Exception as exc:
+            print(f'Order notification email failed: {exc}', file=sys.stderr)
+
+    threading.Thread(target=_send, daemon=True).start()
 
 def create_admin_session(account):
     token = secrets.token_urlsafe(32)
@@ -365,6 +438,7 @@ def submit_order():
         orders.insert(0, order)
         return orders
     mutate_json(ORDERS_FILE, _insert, [])
+    send_order_notification(order)
     return jsonify(order), 201
 
 @app.route('/api/orders/<order_no>/status', methods=['PUT'])
