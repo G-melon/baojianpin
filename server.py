@@ -539,9 +539,9 @@ def build_orders_workbook(filtered, include_prices=False):
     thin = Side(border_style='thin', color='000000')
     border = Border(left=thin, right=thin, top=thin, bottom=thin)
     title_font = Font(name='宋体', size=20, bold=True)
-    info_font  = Font(name='宋体', size=13)
+    info_font  = Font(name='宋体', size=13, bold=True)
     head_font  = Font(name='宋体', size=12, bold=True)
-    body_font  = Font(name='宋体', size=11)
+    body_font  = Font(name='宋体', size=11, bold=True)
     center_wrap = Alignment(horizontal='center', vertical='center', wrap_text=True)
     left_wrap   = Alignment(horizontal='left',   vertical='center', wrap_text=True)
 

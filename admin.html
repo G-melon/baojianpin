@@ -18,10 +18,15 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body {
   font-family: SimSun, 'Songti SC', 'Noto Serif CJK SC', serif;
+  font-weight: 700;
   background: var(--bg); color: var(--text); line-height: 1.6;
   min-height: 100vh;
 }
-button, input, textarea, select { font-family: SimSun, 'Songti SC', 'Noto Serif CJK SC', serif; }
+body, body * {
+  font-family: SimSun, 'Songti SC', 'Noto Serif CJK SC', serif !important;
+  font-weight: 700 !important;
+}
+button, input, textarea, select { font-family: SimSun, 'Songti SC', 'Noto Serif CJK SC', serif; font-weight: 700; }
 /* ========== Login ========== */
 .login-overlay {
   position: fixed; inset: 0; z-index: 999;
