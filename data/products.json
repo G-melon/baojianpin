@@ -225,15 +225,15 @@
     "internalPrice": 198,
     "internalPriceText": "¥198",
     "code": "NG-006",
-    "cardCount": "2g/条",
+    "cardCount": "2g/条，100条/袋",
     "cardOptions": [
-      "2g/条"
+      "2g/条，100条/袋"
     ],
     "productOptionText": "",
     "productOptions": [],
     "specs": {
       "商品名称": "呼吸道免疫益生菌",
-      "规格": "2g/条",
+      "规格": "2g/条，100条/袋",
       "内购价": "¥198"
     },
     "details": [
@@ -266,15 +266,15 @@
     "internalPrice": 230,
     "internalPriceText": "¥230",
     "code": "NG-007",
-    "cardCount": "2g/条",
+    "cardCount": "2g/条，100条/袋",
     "cardOptions": [
-      "2g/条"
+      "2g/条，100条/袋"
     ],
     "productOptionText": "",
     "productOptions": [],
     "specs": {
       "商品名称": "女性益生菌",
-      "规格": "2g/条",
+      "规格": "2g/条，100条/袋",
       "内购价": "¥230"
     },
     "details": [
@@ -345,15 +345,15 @@
     "internalPrice": 150,
     "internalPriceText": "¥150",
     "code": "NG-009",
-    "cardCount": "6g/条",
+    "cardCount": "6g/条，100条/袋",
     "cardOptions": [
-      "6g/条"
+      "6g/条，100条/袋"
     ],
     "productOptionText": "",
     "productOptions": [],
     "specs": {
       "商品名称": "胶原蛋白",
-      "规格": "6g/条",
+      "规格": "6g/条，100条/袋",
       "内购价": "¥150"
     },
     "details": [
@@ -391,15 +391,15 @@
     "internalPrice": 230,
     "internalPriceText": "¥230",
     "code": "NG-010",
-    "cardCount": "8-10g/条",
+    "cardCount": "8-10g/条，100条/袋",
     "cardOptions": [
-      "8-10g/条"
+      "8-10g/条，100条/袋"
     ],
     "productOptionText": "",
     "productOptions": [],
     "specs": {
       "商品名称": "比利时Sensus菊粉",
-      "规格": "8-10g/条",
+      "规格": "8-10g/条，100条/袋",
       "内购价": "¥230"
     },
     "details": [
@@ -473,15 +473,15 @@
     "internalPrice": 230,
     "internalPriceText": "¥230",
     "code": "NG-012",
-    "cardCount": "2g/袋",
+    "cardCount": "2g/袋，100条/袋",
     "cardOptions": [
-      "2g/袋"
+      "2g/袋，100条/袋"
     ],
     "productOptionText": "",
     "productOptions": [],
     "specs": {
       "商品名称": "睡眠益生菌",
-      "规格": "2g/袋",
+      "规格": "2g/袋，100条/袋",
       "内购价": "¥230"
     },
     "details": [
@@ -552,15 +552,15 @@
     "internalPrice": 230,
     "internalPriceText": "¥230",
     "code": "NG-014",
-    "cardCount": "2g/袋",
+    "cardCount": "2g/袋，100条/袋",
     "cardOptions": [
-      "2g/袋"
+      "2g/袋，100条/袋"
     ],
     "productOptionText": "",
     "productOptions": [],
     "specs": {
       "商品名称": "抗幽门益生菌",
-      "规格": "2g/袋",
+      "规格": "2g/袋，100条/袋",
       "内购价": "¥230"
     },
     "details": [
