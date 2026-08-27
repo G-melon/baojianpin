@@ -523,16 +523,16 @@ def build_orders_workbook(filtered, include_prices=False):
         ws.row_dimensions[3].height = 22
         ws.row_dimensions[4].height = 22
 
-        # ---- Row 5-6: 收货地址 + 物流信息 ----
+        # ---- Row 5-6: 物流信息 + 收货地址 ----
         apply_border_block(ws, 5, 6, 1, 9)
-        ws.merge_cells('A5:F6')
-        ws.merge_cells('G5:I6')
+        ws.merge_cells('A5:C6')
+        ws.merge_cells('D5:I6')
         ws['A5'] = '快递/物流：\n单号：'
         ws['A5'].font = info_font; ws['A5'].alignment = left_wrap
-        ws['G5'] = f'收货地址：{addresses or "未填写"}'
-        ws['G5'].font = info_font; ws['G5'].alignment = left_wrap
-        ws.row_dimensions[5].height = 28 if addresses else 22
-        ws.row_dimensions[6].height = 28 if addresses else 22
+        ws['D5'] = f'收货地址：{addresses or "未填写"}'
+        ws['D5'].font = info_font; ws['D5'].alignment = left_wrap
+        ws.row_dimensions[5].height = 32
+        ws.row_dimensions[6].height = 32
 
         # ---- Row 7-8: 列标题 ----
         apply_border_block(ws, 7, 8, 1, 9)
