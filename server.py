@@ -146,7 +146,12 @@ def normalize_product(product):
     tags = product.get('tags') or []
     if not isinstance(tags, list):
         tags = [str(tags)]
-    product['tags'] = [str(t).strip() for t in tags if str(t).strip()]
+    clean_tags = []
+    for tag in tags:
+        tag = str(tag).strip()
+        if tag and tag not in clean_tags:
+            clean_tags.append(tag)
+    product['tags'] = clean_tags
     product['cat'] = normalize_category(
         product.get('cat', ''),
         product.get('name', ''),

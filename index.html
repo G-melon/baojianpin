@@ -1847,6 +1847,12 @@ function normalizeClientCategory(product) {
   if (CATEGORY_NAMES.includes(product.cat)) return product;
   return { ...product, cat: CATEGORY_ALIASES[product.cat] || '营养补充' };
 }
+function visibleTags(product) {
+  const tags = [product?.cat, ...(product?.tags || [])]
+    .map(tag => String(tag || '').trim())
+    .filter(Boolean);
+  return tags.filter((tag, index) => tags.indexOf(tag) === index).slice(0, 3);
+}
 /* ================================================================
    DOM REFS
    ================================================================ */
@@ -2050,6 +2056,7 @@ function renderProductDetail(product, activeImage = null, selectedCardOption = n
   const priceText = product.internalPriceText || (product.internalPrice ? `¥${escapeHTML(product.internalPrice)}` : '');
   const efficacyCopy = product.efficacy || (product.details || []).join('\n');
   const usageCopy = product.usage || (product.usageDetails || []).join('\n');
+  const badges = visibleTags(product);
   const specRows = Object.entries(specs).map(([label, value]) => `
     <div class="detail-spec">
       <div class="detail-spec-label">${escapeHTML(label)}</div>
@@ -2072,8 +2079,7 @@ function renderProductDetail(product, activeImage = null, selectedCardOption = n
         <div class="detail-title">${escapeHTML(product.name)}</div>
         <div class="detail-desc">${escapeHTML(product.desc || '')}</div>
         <div class="card-tags" style="margin-bottom:14px">
-          ${product.cat ? `<span class="card-badge">${escapeHTML(product.cat)}</span>` : ''}
-          ${(product.tags||[]).map(t => `<span class="card-badge">${escapeHTML(t)}</span>`).join(' ')}
+          ${badges.map(t => `<span class="card-badge">${escapeHTML(t)}</span>`).join(' ')}
         </div>
         <div class="detail-media-grid">
           <div>
@@ -2218,6 +2224,7 @@ function renderGrid() {
     const emoji = escapeHTML(p.emoji || '');
     const price = escapeHTML(p.internalPriceText || (p.internalPrice ? `¥${p.internalPrice}` : ''));
     const spec = escapeHTML(p.cardCount || '');
+    const badges = visibleTags(p);
     return `
       <div class="product-card${selected ? ' selected' : ''}" data-id="${id}"
            role="listitem" tabindex="0" aria-label="${name} — ${desc}"${selectedAttr}>
@@ -2233,8 +2240,7 @@ function renderGrid() {
           <div class="card-desc">${desc}</div>
           ${price ? `<div class="card-price">${price}</div>` : ''}
           <div class="card-tags">
-            ${p.cat ? `<span class="card-badge">${escapeHTML(p.cat)}</span>` : ''}
-            ${(p.tags||[]).map(t => `<span class="card-badge">${escapeHTML(t)}</span>`).join(' ')}
+            ${badges.map(t => `<span class="card-badge">${escapeHTML(t)}</span>`).join(' ')}
           </div>
           <div class="card-qty-row" onclick="event.stopPropagation()">
             <button class="qty-btn" data-action="minus" data-id="${id}" aria-label="减少${name}数量">−</button>
