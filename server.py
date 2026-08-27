@@ -504,18 +504,16 @@ def build_orders_workbook(filtered, include_prices=False):
             contact_text += f'     电话：{phones}'
         if emails:
             contact_text += f'     邮箱：{emails}'
-        if addresses:
-            contact_text += f'\n  收货地址：{addresses}'
         ws['A3'] = contact_text
         ws['A3'].font = info_font; ws['A3'].alignment = left_wrap
-        ws.row_dimensions[3].height = 28 if addresses else 22
-        ws.row_dimensions[4].height = 28 if addresses else 22
+        ws.row_dimensions[3].height = 22
+        ws.row_dimensions[4].height = 22
 
-        # ---- Row 5-6: 物流信息 ----
+        # ---- Row 5-6: 收货地址 + 物流信息 ----
         apply_border_block(ws, 5, 6, 1, 9)
         ws.merge_cells('A5:F6')
         ws.merge_cells('G5:I6')
-        ws['A5'] = '快递/物流：\n单号：'
+        ws['A5'] = f'收货地址：{addresses or ""}\n快递/物流：        单号：'
         ws['A5'].font = info_font; ws['A5'].alignment = left_wrap
         customer_total = sum(
             (item_unit_price(item) or 0) * numeric_qty(item)
@@ -524,8 +522,8 @@ def build_orders_workbook(filtered, include_prices=False):
         )
         ws['G5'] = f'总金额：¥{format_amount(customer_total)}' if include_prices else ''
         ws['G5'].font = info_font; ws['G5'].alignment = left_wrap
-        ws.row_dimensions[5].height = 22
-        ws.row_dimensions[6].height = 22
+        ws.row_dimensions[5].height = 28 if addresses else 22
+        ws.row_dimensions[6].height = 28 if addresses else 22
 
         # ---- Row 7-8: 列标题 ----
         apply_border_block(ws, 7, 8, 1, 9)
