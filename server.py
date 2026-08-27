@@ -499,11 +499,18 @@ def build_orders_workbook(filtered, include_prices=False):
         phones = '、'.join(sorted({o.get('customerPhone', '') for o in cust_orders if o.get('customerPhone')}))
         emails = '、'.join(sorted({o.get('customerEmail', '') for o in cust_orders if o.get('customerEmail')}))
         addresses = '、'.join(sorted({o.get('customerAddress', '') for o in cust_orders if o.get('customerAddress')}))
+        customer_total = sum(
+            (item_unit_price(item) or 0) * numeric_qty(item)
+            for order in cust_orders
+            for item in order.get('items', [])
+        )
         contact_text = f'  总件数：{total_qty} 件     订单编号：{order_nos}'
         if phones:
             contact_text += f'     电话：{phones}'
         if emails:
             contact_text += f'     邮箱：{emails}'
+        if include_prices:
+            contact_text += f'     总金额：¥{format_amount(customer_total)}'
         ws['A3'] = contact_text
         ws['A3'].font = info_font; ws['A3'].alignment = left_wrap
         ws.row_dimensions[3].height = 22
@@ -513,14 +520,9 @@ def build_orders_workbook(filtered, include_prices=False):
         apply_border_block(ws, 5, 6, 1, 9)
         ws.merge_cells('A5:F6')
         ws.merge_cells('G5:I6')
-        ws['A5'] = f'收货地址：{addresses or ""}\n快递/物流：        单号：'
+        ws['A5'] = '快递/物流：\n单号：'
         ws['A5'].font = info_font; ws['A5'].alignment = left_wrap
-        customer_total = sum(
-            (item_unit_price(item) or 0) * numeric_qty(item)
-            for order in cust_orders
-            for item in order.get('items', [])
-        )
-        ws['G5'] = f'总金额：¥{format_amount(customer_total)}' if include_prices else ''
+        ws['G5'] = f'收货地址：{addresses or ""}'
         ws['G5'].font = info_font; ws['G5'].alignment = left_wrap
         ws.row_dimensions[5].height = 28 if addresses else 22
         ws.row_dimensions[6].height = 28 if addresses else 22
