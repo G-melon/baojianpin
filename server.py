@@ -452,6 +452,13 @@ def build_orders_workbook(filtered, include_prices=False):
     def format_amount(value):
         return str(int(value)) if float(value).is_integer() else f'{value:.2f}'
 
+    def order_address(order):
+        for key in ('customerAddress', 'address', 'shippingAddress', 'receiverAddress', '收货地址'):
+            value = order.get(key)
+            if value:
+                return str(value).strip()
+        return ''
+
     wb = Workbook()
     wb.remove(wb.active)
 
@@ -498,7 +505,7 @@ def build_orders_workbook(filtered, include_prices=False):
         ws.merge_cells('A3:I4')
         phones = '、'.join(sorted({o.get('customerPhone', '') for o in cust_orders if o.get('customerPhone')}))
         emails = '、'.join(sorted({o.get('customerEmail', '') for o in cust_orders if o.get('customerEmail')}))
-        addresses = '、'.join(sorted({o.get('customerAddress', '') for o in cust_orders if o.get('customerAddress')}))
+        addresses = '、'.join(sorted({order_address(o) for o in cust_orders if order_address(o)}))
         customer_total = sum(
             (item_unit_price(item) or 0) * numeric_qty(item)
             for order in cust_orders
@@ -522,7 +529,7 @@ def build_orders_workbook(filtered, include_prices=False):
         ws.merge_cells('G5:I6')
         ws['A5'] = '快递/物流：\n单号：'
         ws['A5'].font = info_font; ws['A5'].alignment = left_wrap
-        ws['G5'] = f'收货地址：{addresses or ""}'
+        ws['G5'] = f'收货地址：{addresses or "未填写"}'
         ws['G5'].font = info_font; ws['G5'].alignment = left_wrap
         ws.row_dimensions[5].height = 28 if addresses else 22
         ws.row_dimensions[6].height = 28 if addresses else 22
