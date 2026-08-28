@@ -2679,7 +2679,7 @@ function orderCreatedTime(order) {
 }
 function canEditCustomerOrder(order) {
   const created = orderCreatedTime(order);
-  return Boolean(order?.editToken && created && Date.now() - created <= ORDER_EDIT_WINDOW_MS);
+  return Boolean(order?.editToken && order?.status !== '已取消' && created && Date.now() - created <= ORDER_EDIT_WINDOW_MS);
 }
 function orderEditMinutesLeft(order) {
   const created = orderCreatedTime(order);
@@ -2810,6 +2810,30 @@ async function updateCustomerOrder(originalOrder, orderInfo) {
     return updated;
   } catch(e) {
     showToast('网络异常，订单修改失败');
+    return null;
+  }
+}
+async function cancelCustomerOrder(order) {
+  if (!order?.orderNo || !order?.editToken) return null;
+  try {
+    const res = await fetch('/api/orders/' + encodeURIComponent(order.orderNo) + '/cancel', {
+      method: 'PUT',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ editToken: order.editToken })
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      showToast(data.error || '订单取消失败');
+      return null;
+    }
+    const cancelled = await res.json();
+    const saved = { ...cancelled, editToken: order.editToken };
+    rememberOrder(saved);
+    await fetchProductSales();
+    refreshAll();
+    return saved;
+  } catch(e) {
+    showToast('网络异常，订单取消失败');
     return null;
   }
 }
@@ -2971,6 +2995,7 @@ function renderMyOrders() {
         const editable = canEditCustomerOrder(order);
         const left = orderEditMinutesLeft(order);
         const items = compactOrderItems(order.items || []);
+        const isCancelled = order.status === '已取消';
         return `
           <div class="my-order-card" data-order-no="${escapeHTML(order.orderNo || '')}">
             <div class="my-order-head">
@@ -2986,7 +3011,8 @@ function renderMyOrders() {
             <div class="my-order-items">${items || '暂无商品'}</div>
             <div class="my-order-actions">
               <button class="btn btn-outline" data-action="refresh-order">刷新</button>
-              ${editable ? `<button class="btn btn-gold" data-action="edit-order">编辑（剩${left}分钟）</button>` : `<button class="btn btn-outline" disabled>已过编辑时间</button>`}
+              ${editable ? `<button class="btn btn-gold" data-action="edit-order">编辑（剩${left}分钟）</button>` : `<button class="btn btn-outline" disabled>${isCancelled ? '订单已取消' : '已过编辑时间'}</button>`}
+              ${editable ? `<button class="btn btn-outline" data-action="cancel-order">取消订单</button>` : ''}
             </div>
           </div>`;
       }).join('')}
@@ -3014,6 +3040,20 @@ async function handleMyOrderAction(e) {
   if (button.dataset.action === 'refresh-order') {
     renderMyOrders();
     showToast('订单已刷新');
+    return;
+  }
+  if (button.dataset.action === 'cancel-order') {
+    if (!canEditCustomerOrder(fresh)) {
+      renderMyOrders();
+      showToast('已超过10分钟，不能取消');
+      return;
+    }
+    if (!window.confirm('确认取消这个订单吗？取消后后台会同步变成已取消。')) return;
+    const cancelled = await cancelCustomerOrder(fresh);
+    if (cancelled) {
+      renderMyOrders();
+      showToast('订单已取消');
+    }
     return;
   }
   if (!canEditCustomerOrder(fresh)) {

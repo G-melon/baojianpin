@@ -205,6 +205,8 @@ def order_edit_deadline(order):
     return created_at.timestamp() + ORDER_EDIT_WINDOW_SECONDS
 
 def can_customer_edit(order):
+    if order.get("status") == "已取消":
+        return False
     deadline = order_edit_deadline(order)
     return deadline is not None and datetime.now().timestamp() <= deadline
 
@@ -249,10 +251,13 @@ def sanitize_order_payload(data):
     }
 
 def format_order_notification(order):
+    status = order.get("status", DEFAULT_ORDER_STATUS)
+    title = "订单已取消" if status == "已取消" else ("订单已修改" if order.get("updatedAt") else "有新订单")
     lines = [
-        '保健品家庭内购平台有新订单',
+        f'保健品家庭内购平台{title}',
         '',
         f'订单编号：{order.get("orderNo", "")}',
+        f'订单状态：{status}',
         f'下单人：{order.get("customerName", "")}',
         f'联系电话：{order.get("customerPhone", "")}',
         f'收货地址：{order.get("customerAddress", "")}',
@@ -293,7 +298,9 @@ def send_order_notification(order):
 
     smtp_port = int(env_value('SMTP_PORT', '465') or 465)
     smtp_from = env_value('SMTP_FROM') or smtp_user
-    subject = f'新订单：{order.get("customerName", "")} {order.get("orderNo", "")}'
+    status = order.get("status", DEFAULT_ORDER_STATUS)
+    action = "订单已取消" if status == "已取消" else ("订单已修改" if order.get("updatedAt") else "新订单")
+    subject = f'{action}：{order.get("customerName", "")} {order.get("orderNo", "")}'
     message = EmailMessage()
     message['Subject'] = subject
     message['From'] = smtp_from
@@ -364,6 +371,8 @@ def get_product_sales():
     orders = load_json(ORDERS_FILE, [])
     sales = {}
     for order in orders:
+        if order.get("status") == "已取消":
+            continue
         for item in order.get('items', []):
             try:
                 qty = int(float(item.get('qty', 0) or 0))
@@ -540,6 +549,8 @@ def update_customer_order(order_no):
                 continue
             if order.get("editToken") != token:
                 return orders, ("invalid", None)
+            if order.get("status") == "已取消":
+                return orders, ("cancelled", None)
             if not can_customer_edit(order):
                 return orders, ("expired", None)
             order.update(clean)
@@ -552,6 +563,42 @@ def update_customer_order(order_no):
         return jsonify({"error":"订单凭证无效"}), 403
     if status == "expired":
         return jsonify({"error":"订单已超过10分钟，不能修改"}), 409
+    if status == "cancelled":
+        return jsonify({"error":"订单已取消，不能修改"}), 409
+    if status == "missing":
+        return jsonify({"error":"订单不存在"}), 404
+    send_order_notification(updated)
+    return jsonify(updated)
+
+@app.route('/api/orders/<order_no>/cancel', methods=['PUT'])
+def cancel_customer_order(order_no):
+    """顾客 10 分钟内凭编辑 token 取消自己的订单。"""
+    data = request.get_json() or {}
+    token = str(data.get('editToken', '')).strip()
+    if not token:
+        return jsonify({"error":"订单凭证无效"}), 403
+
+    def _cancel(orders):
+        for order in orders:
+            if order.get("orderNo") != order_no:
+                continue
+            if order.get("editToken") != token:
+                return orders, ("invalid", None)
+            if order.get("status") == "已取消":
+                return orders, ("ok", order)
+            if not can_customer_edit(order):
+                return orders, ("expired", None)
+            order["status"] = "已取消"
+            order["cancelledAt"] = datetime.now().isoformat()
+            order["statusUpdatedAt"] = order["cancelledAt"]
+            return orders, ("ok", order)
+        return orders, ("missing", None)
+
+    status, updated = mutate_json(ORDERS_FILE, _cancel, [])
+    if status == "invalid":
+        return jsonify({"error":"订单凭证无效"}), 403
+    if status == "expired":
+        return jsonify({"error":"订单已超过10分钟，不能取消"}), 409
     if status == "missing":
         return jsonify({"error":"订单不存在"}), 404
     send_order_notification(updated)
