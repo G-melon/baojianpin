@@ -489,6 +489,21 @@ body.welcome-active {
 .card-visual .card-img-wrap .card-placeholder {
   font-size: 2.8rem; opacity: 0.5; color: var(--color-text-subtle);
 }
+.card-sold-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+  padding: 5px 10px;
+  border-radius: var(--radius-full);
+  background: rgba(255,255,255,0.92);
+  color: var(--color-primary-deep);
+  border: 1px solid rgba(139,26,43,0.18);
+  box-shadow: var(--shadow-sm);
+  font-size: 0.72rem;
+  line-height: 1.2;
+  white-space: nowrap;
+}
 /* Card body */
 .card-body { padding: 14px 16px 16px; flex: 1; display: flex; flex-direction: column; }
 .card-name {
@@ -1797,6 +1812,7 @@ const PRODUCTS = [];
    API — 从服务器加载产品（服务器不可用时回退到默认数据）
    ================================================================ */
 let _apiProducts = null;
+let _productSales = {};
 async function fetchProducts() {
   try {
     const res = await fetch('/api/products');
@@ -1808,6 +1824,16 @@ async function fetchProducts() {
     }
   } catch(e) {}
   _apiProducts = null; // 回退到默认 PRODUCTS
+}
+async function fetchProductSales() {
+  try {
+    const res = await fetch('/api/product-sales');
+    if (res.ok) {
+      _productSales = await res.json();
+      return;
+    }
+  } catch(e) {}
+  _productSales = {};
 }
 function getProducts() {
   return (_apiProducts || PRODUCTS).map(normalizeClientCategory);
@@ -1856,6 +1882,12 @@ function visibleTags(product) {
     .map(tag => String(tag || '').trim())
     .filter(Boolean);
   return tags.filter((tag, index) => tags.indexOf(tag) === index).slice(0, 3);
+}
+function getProductSoldCount(product) {
+  if (!product) return 0;
+  const id = String(product.id || '').trim();
+  const name = String(product.name || '').trim();
+  return Number(_productSales[id] || _productSales[name] || 0);
 }
 /* ================================================================
    DOM REFS
@@ -2228,12 +2260,14 @@ function renderGrid() {
     const emoji = escapeHTML(p.emoji || '');
     const price = escapeHTML(p.internalPriceText || (p.internalPrice ? `¥${p.internalPrice}` : ''));
     const spec = escapeHTML(p.cardCount || '');
+    const sold = getProductSoldCount(p);
     const badges = visibleTags(p);
     return `
       <div class="product-card${selected ? ' selected' : ''}" data-id="${id}"
            role="listitem" tabindex="0" aria-label="${name} — ${desc}"${selectedAttr}>
         ${selected ? '<div class="selected-dot" aria-hidden="true">✓</div>' : ''}
         <div class="card-visual ${bg}">
+          <div class="card-sold-badge">已购 ${sold} 件</div>
           <div class="card-img-wrap">
             ${p.image ? `<img src="${image}" alt="${name}" loading="lazy">` : `<span class="card-placeholder">${emoji}</span>`}
           </div>
@@ -2779,6 +2813,8 @@ async function submitConfirmedOrder() {
   $btnOrderSubmit.disabled = false;
   $btnOrderSubmit.textContent = '确认提交';
   if (!order) return;
+  await fetchProductSales();
+  refreshAll();
   renderOrderSuccess(order);
   setOrderStep('success');
 }
@@ -2924,6 +2960,7 @@ document.addEventListener('keydown', function(e) {
 (async function init() {
   initWelcomeScreen();
   await fetchProducts();             // 尝试从服务器加载产品
+  await fetchProductSales();          // 读取每个商品的累计已购数量
   renderCategoryTabs();
   renderGrid();
   renderSidebarCart();

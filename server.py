@@ -300,6 +300,23 @@ def get_products():
     products = [normalize_product(dict(p)) for p in products]
     return jsonify(products)
 
+@app.route('/api/product-sales', methods=['GET'])
+def get_product_sales():
+    """公开销量累计：按已提交订单里的商品 id/name 统计购买件数。"""
+    orders = load_json(ORDERS_FILE, [])
+    sales = {}
+    for order in orders:
+        for item in order.get('items', []):
+            try:
+                qty = int(float(item.get('qty', 0) or 0))
+            except (TypeError, ValueError):
+                qty = 0
+            for key in (item.get('id'), item.get('name')):
+                key = str(key or '').strip()
+                if key:
+                    sales[key] = sales.get(key, 0) + qty
+    return jsonify(sales)
+
 @app.route('/api/products', methods=['POST'])
 def add_product():
     """添加新产品（需要 admin 鉴权）"""
