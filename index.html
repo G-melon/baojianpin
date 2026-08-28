@@ -315,6 +315,24 @@ body.welcome-active {
   font-weight: 400;
   letter-spacing: 0.03em;
 }
+.header-actions {
+  position: absolute;
+  right: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.header-order-btn {
+  border: 1.5px solid rgba(139,26,43,0.28);
+  background: #fff;
+  color: var(--color-primary);
+  border-radius: var(--radius-full);
+  padding: 8px 14px;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
 /* ============================================================
    LAYOUT
    ============================================================ */
@@ -899,6 +917,51 @@ body.welcome-active {
   font-weight: 800;
   overflow-wrap: anywhere;
 }
+.my-order-list {
+  display: grid;
+  gap: 10px;
+  max-height: 68vh;
+  overflow: auto;
+}
+.my-order-card {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  padding: 12px;
+}
+.my-order-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+.my-order-no {
+  color: var(--color-primary);
+  font-size: 0.82rem;
+  overflow-wrap: anywhere;
+}
+.my-order-status {
+  color: var(--color-text-subtle);
+  font-size: 0.76rem;
+  white-space: nowrap;
+}
+.my-order-items {
+  display: grid;
+  gap: 4px;
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  margin: 8px 0;
+}
+.my-order-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+.my-order-actions .btn {
+  flex: 1;
+  justify-content: center;
+}
 .modal-close {
   position: absolute; top: 12px; right: 16px;
   background: rgba(0,0,0,0.04);
@@ -1476,6 +1539,7 @@ body.welcome-active {
   .header h1 { font-size: 1.08rem; }
   .header p { font-size: 0.78rem; }
   .header-logo { left: 14px; width: 72px; height: 50px; }
+  .header-actions { display: none; }
   .app-container { padding: 12px 8px 110px; }
   .product-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -1598,6 +1662,9 @@ body.welcome-active {
   </div>
   <h1>保健品家庭内购平台</h1>
   <p>保健品选购 · 商品管理 · 在线下单 · 一键下载</p>
+  <div class="header-actions">
+    <button class="header-order-btn" id="btnMyOrders" type="button">我的订单</button>
+  </div>
 </header>
 <!-- ============================================================
      MAIN LAYOUT
@@ -1717,6 +1784,7 @@ body.welcome-active {
   <button class="btn btn-outline" id="btnClearCartMobile" style="flex:0.35">清空</button>
   <button class="btn btn-primary" id="btnViewCartMobile" style="flex:0.65">清单</button>
   <button class="btn btn-gold" id="btnSubmitMobile" style="flex:1">提交</button>
+  <button class="btn btn-outline" id="btnMyOrdersMobile" style="flex:0.7">订单</button>
 </div>
 <!-- ============================================================
      TOAST
@@ -1738,6 +1806,13 @@ body.welcome-active {
     <div class="cart-actions" style="margin-top:6px">
       <button class="btn btn-gold" id="btnSubmitModal" style="flex:1">提交订单</button>
     </div>
+  </div>
+</div>
+<div class="modal-overlay" id="myOrdersOverlay" aria-hidden="true">
+  <div class="modal" id="myOrdersModal" role="dialog" aria-modal="true" aria-label="我的订单">
+    <button class="modal-close" id="myOrdersClose" aria-label="关闭我的订单"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    <h3>我的订单</h3>
+    <div id="myOrdersContent"></div>
   </div>
 </div>
 <!-- ============================================================
@@ -1920,6 +1995,9 @@ const $imagePreviewNext = document.getElementById('imagePreviewNext');
 const $welcomeScreen = document.getElementById('welcomeScreen');
 const $welcomeEnter = document.getElementById('welcomeEnter');
 const $printContent  = document.getElementById('printContent');
+const $myOrdersOverlay = document.getElementById('myOrdersOverlay');
+const $myOrdersContent = document.getElementById('myOrdersContent');
+const $myOrdersClose = document.getElementById('myOrdersClose');
 /* ================================================================
    TOAST
    ================================================================ */
@@ -2578,13 +2656,38 @@ function downloadOrder() {
    SUBMIT ORDER — localStorage
    ================================================================ */
 const ORDERS_KEY = 'health_orders';
+const ORDER_EDIT_WINDOW_MS = 10 * 60 * 1000;
 function loadOrders() {
   try { return JSON.parse(localStorage.getItem(ORDERS_KEY)) || []; }
   catch(e) { return []; }
 }
 function saveOrders(orders) {
-  try { localStorage.setItem(ORDERS_KEY, JSON.stringify(orders)); }
+  try { localStorage.setItem(ORDERS_KEY, JSON.stringify(orders.slice(0, 30))); }
   catch(e) { showToast('存储空间不足，请清理旧订单'); }
+}
+function rememberOrder(order) {
+  if (!order || !order.orderNo) return;
+  const orders = loadOrders().filter(o => o.orderNo !== order.orderNo);
+  orders.unshift(order);
+  saveOrders(orders);
+}
+function orderCreatedTime(order) {
+  if (!order) return 0;
+  if (typeof order.timestamp === 'number') return order.timestamp;
+  const parsed = Date.parse(order.timestamp || '');
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+function canEditCustomerOrder(order) {
+  const created = orderCreatedTime(order);
+  return Boolean(order?.editToken && created && Date.now() - created <= ORDER_EDIT_WINDOW_MS);
+}
+function orderEditMinutesLeft(order) {
+  const created = orderCreatedTime(order);
+  if (!created) return 0;
+  return Math.max(0, Math.ceil((ORDER_EDIT_WINDOW_MS - (Date.now() - created)) / 60000));
+}
+function compactOrderItems(items = []) {
+  return items.map(item => `${escapeHTML(item.name || '')} ×${Number(item.qty) || 0}`).join('<br>');
 }
 function generateOrderNo() {
   const now = new Date();
@@ -2592,11 +2695,30 @@ function generateOrderNo() {
   return 'HP' + now.getFullYear() + pad(now.getMonth()+1) + pad(now.getDate())
             + pad(now.getHours()) + pad(now.getMinutes()) + pad(now.getSeconds());
 }
-async function submitOrder(orderInfo) {
-  const entries = getCartEntries();
+function buildOrderPayload(orderInfo, entries) {
+  return {
+    customerName: (orderInfo.name || '').trim(),
+    customerPhone: (orderInfo.phone || '').trim(),
+    customerEmail: (orderInfo.email || '').trim(),
+    customerAddress: (orderInfo.address || '').trim(),
+    note: orderInfo.note || '',
+    items: entries.map(e => ({
+      id: e.id,
+      name: e.name,
+      emoji: e.emoji,
+      cat: e.cat,
+      cardCount: e.cardOption || e.cardCount || '',
+      productOption: e.productOption || '',
+      internalPrice: e.internalPrice || '',
+      price: e.internalPrice || '',
+      qty: e.qty
+    }))
+  };
+}
+function validateOrderInfo(orderInfo, entries) {
   if (entries.length === 0) {
     showToast('请先选择商品');
-    return null;
+    return false;
   }
   const customerName = orderInfo.name || '';
   const customerPhone = orderInfo.phone || '';
@@ -2604,31 +2726,27 @@ async function submitOrder(orderInfo) {
   const customerAddress = orderInfo.address || '';
   if (!customerName || !customerName.trim()) {
     showToast('请填写下单人姓名');
-    return null;
+    return false;
   }
   if (!customerPhone || !customerPhone.trim()) {
     showToast('请填写联系电话');
-    return null;
+    return false;
   }
   const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (customerEmail.trim() && !emailPattern.test(customerEmail.trim())) {
     showToast('请填写正确的邮箱');
-    return null;
+    return false;
   }
   if (!customerAddress || !customerAddress.trim()) {
     showToast('请填写收货地址');
-    return null;
+    return false;
   }
-  const orderData = {
-    customerName: customerName.trim(),
-    customerPhone: customerPhone.trim(),
-    customerEmail: customerEmail.trim(),
-    customerAddress: customerAddress.trim(),
-    note: orderInfo.note || '',
-    items: entries.map(e => ({
-      id: e.id, name: e.name, emoji: e.emoji, cat: e.cat, cardCount: e.cardOption || e.cardCount || '', productOption: e.productOption || '', qty: e.qty
-    }))
-  };
+  return true;
+}
+async function submitOrder(orderInfo) {
+  const entries = getCartEntries();
+  if (!validateOrderInfo(orderInfo, entries)) return null;
+  const orderData = buildOrderPayload(orderInfo, entries);
   // 尝试提交到服务器
   let submitted = false;
   let savedOrder = null;
@@ -2662,9 +2780,38 @@ async function submitOrder(orderInfo) {
     saveOrders(orders);
     savedOrder = order;
   }
+  rememberOrder(savedOrder);
   cart = {};
   refreshAll();
   return savedOrder;
+}
+async function updateCustomerOrder(originalOrder, orderInfo) {
+  const entries = getCartEntries();
+  if (!validateOrderInfo(orderInfo, entries)) return null;
+  const orderData = {
+    ...buildOrderPayload(orderInfo, entries),
+    editToken: originalOrder.editToken
+  };
+  try {
+    const res = await fetch('/api/orders/' + encodeURIComponent(originalOrder.orderNo), {
+      method: 'PUT',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(orderData)
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      showToast(data.error || '订单修改失败');
+      return null;
+    }
+    const updated = await res.json();
+    rememberOrder(updated);
+    cart = {};
+    refreshAll();
+    return updated;
+  } catch(e) {
+    showToast('网络异常，订单修改失败');
+    return null;
+  }
 }
 /* ================================================================
    NAME MODAL
@@ -2696,12 +2843,42 @@ const $orderSteps = {
   success: document.getElementById('orderStepSuccess')
 };
 let pendingOrderInfo = null;
+let editingOrder = null;
 function setOrderStep(step) {
   $orderInfoStep.style.display = step === 'info' ? '' : 'none';
   $orderConfirmStep.style.display = step === 'confirm' ? '' : 'none';
   $orderSuccessStep.style.display = step === 'success' ? '' : 'none';
   Object.entries($orderSteps).forEach(([key, el]) => el.classList.toggle('active', key === step));
   $orderTitle.textContent = step === 'info' ? '填写下单信息' : step === 'confirm' ? '确认订单' : '提交成功';
+}
+function parseSavedNote(note = '') {
+  const result = { company: '', expectedDeliveryDate: '', rawNote: '' };
+  String(note || '').split('\n').forEach(line => {
+    if (line.startsWith('公司名称：')) result.company = line.slice(5);
+    else if (line.startsWith('期望交货日期：')) result.expectedDeliveryDate = line.slice(7);
+    else if (line.startsWith('备注：')) result.rawNote = line.slice(3);
+  });
+  return result;
+}
+function fillOrderFormFromOrder(order) {
+  const parsed = parseSavedNote(order.note || '');
+  $nameInput.value = order.customerName || '';
+  $phoneInput.value = order.customerPhone || '';
+  $emailInput.value = order.customerEmail || '';
+  $addressInput.value = order.customerAddress || '';
+  $companyInput.value = parsed.company;
+  $deliveryDateInput.value = parsed.expectedDeliveryDate;
+  $noteInput.value = parsed.rawNote || (order.note && !order.note.includes('：') ? order.note : '');
+}
+function loadOrderItemsToCart(order) {
+  cart = {};
+  (order.items || []).forEach(item => {
+    const id = item.id || '';
+    const cardOption = item.cardCount || item.cardOption || '';
+    const productOption = item.productOption || '';
+    const qty = Number(item.qty) || 0;
+    if (id && qty > 0) cart[cartKeyFor(id, cardOption, productOption)] = qty;
+  });
 }
 function readOrderInfo() {
   const name = $nameInput.value.trim();
@@ -2752,12 +2929,13 @@ function renderOrderConfirm(info) {
   `;
 }
 function renderOrderSuccess(order) {
+  const updated = Boolean(order?.updatedAt);
   $orderSuccessContent.innerHTML = `
     <div class="order-success">
       <div class="order-success-mark">✓</div>
-      <div style="font-size:1.05rem;font-weight:800;color:var(--color-text);margin-bottom:8px">订单已提交</div>
+      <div style="font-size:1.05rem;font-weight:800;color:var(--color-text);margin-bottom:8px">${updated ? '订单已修改' : '订单已提交'}</div>
       <div style="font-size:0.86rem;color:var(--color-text-subtle);line-height:1.7">
-        我们已收到您的订单，客服会尽快与您确认产品和发货信息。
+        ${updated ? '您的订单修改已保存，客服会按最新信息处理。' : '我们已收到您的订单，客服会尽快与您确认产品和发货信息。'}
       </div>
     </div>
     <div class="order-confirm-box" style="margin-top:14px">
@@ -2770,26 +2948,110 @@ function renderOrderSuccess(order) {
     </div>
   `;
 }
-function openNameModal() {
+async function fetchCustomerOrder(order) {
+  if (!order?.orderNo || !order?.editToken) return order;
+  try {
+    const res = await fetch('/api/orders/' + encodeURIComponent(order.orderNo) + '?token=' + encodeURIComponent(order.editToken));
+    if (res.ok) {
+      const fresh = await res.json();
+      return { ...fresh, editToken: order.editToken };
+    }
+  } catch(e) {}
+  return order;
+}
+function renderMyOrders() {
+  const orders = loadOrders();
+  if (!orders.length) {
+    $myOrdersContent.innerHTML = `<div class="cart-empty" style="min-height:180px"><span>还没有订单</span><span style="font-size:0.78rem;margin-top:8px;color:var(--color-text-subtle)">提交订单后会在这里显示</span></div>`;
+    return;
+  }
+  $myOrdersContent.innerHTML = `
+    <div class="my-order-list">
+      ${orders.map(order => {
+        const editable = canEditCustomerOrder(order);
+        const left = orderEditMinutesLeft(order);
+        const items = compactOrderItems(order.items || []);
+        return `
+          <div class="my-order-card" data-order-no="${escapeHTML(order.orderNo || '')}">
+            <div class="my-order-head">
+              <div>
+                <div class="my-order-no">${escapeHTML(order.orderNo || '')}</div>
+                <div style="font-size:0.78rem;color:var(--color-text-subtle);margin-top:2px">${escapeHTML(order.date || '')}</div>
+              </div>
+              <div class="my-order-status">${escapeHTML(order.status || '新订单')}</div>
+            </div>
+            <div class="order-confirm-row"><span class="order-confirm-label">收货人</span><span class="order-confirm-value">${escapeHTML(order.customerName || '')}</span></div>
+            <div class="order-confirm-row"><span class="order-confirm-label">电话</span><span class="order-confirm-value">${escapeHTML(order.customerPhone || '')}</span></div>
+            <div class="order-confirm-row"><span class="order-confirm-label">地址</span><span class="order-confirm-value">${escapeHTML(order.customerAddress || '')}</span></div>
+            <div class="my-order-items">${items || '暂无商品'}</div>
+            <div class="my-order-actions">
+              <button class="btn btn-outline" data-action="refresh-order">刷新</button>
+              ${editable ? `<button class="btn btn-gold" data-action="edit-order">编辑（剩${left}分钟）</button>` : `<button class="btn btn-outline" disabled>已过编辑时间</button>`}
+            </div>
+          </div>`;
+      }).join('')}
+    </div>
+  `;
+}
+function openMyOrders() {
+  renderMyOrders();
+  $myOrdersOverlay.classList.add('open');
+  $myOrdersOverlay.setAttribute('aria-hidden', 'false');
+}
+function closeMyOrders() {
+  $myOrdersOverlay.classList.remove('open');
+  $myOrdersOverlay.setAttribute('aria-hidden', 'true');
+}
+async function handleMyOrderAction(e) {
+  const button = e.target.closest('[data-action]');
+  if (!button) return;
+  const card = button.closest('.my-order-card');
+  const orderNo = card?.dataset.orderNo;
+  const saved = loadOrders().find(order => order.orderNo === orderNo);
+  if (!saved) return;
+  const fresh = await fetchCustomerOrder(saved);
+  rememberOrder(fresh);
+  if (button.dataset.action === 'refresh-order') {
+    renderMyOrders();
+    showToast('订单已刷新');
+    return;
+  }
+  if (!canEditCustomerOrder(fresh)) {
+    renderMyOrders();
+    showToast('已超过10分钟，不能修改');
+    return;
+  }
+  loadOrderItemsToCart(fresh);
+  refreshAll();
+  closeMyOrders();
+  openNameModal(fresh);
+}
+function openNameModal(orderToEdit = null) {
   const entries = getCartEntries();
   if (entries.length === 0) {
     showToast('请先选择商品');
     return;
   }
+  editingOrder = orderToEdit;
   $namePreview.innerHTML = entries.map(e =>
     `<span style="display:inline-block;background:rgba(254,202,202,0.5);padding:3px 10px;border-radius:12px;margin:2px 4px 2px 0;font-size:0.8rem">${escapeHTML(e.emoji||'')} ${escapeHTML(e.name)} ×${e.qty}</span>`
   ).join('');
-  $nameInput.value = '';
-  $phoneInput.value = '';
-  $emailInput.value = '';
-  $addressInput.value = '';
-  $companyInput.value = '';
-  $deliveryDateInput.value = '';
-  $noteInput.value = '';
+  if (orderToEdit) {
+    fillOrderFormFromOrder(orderToEdit);
+  } else {
+    $nameInput.value = '';
+    $phoneInput.value = '';
+    $emailInput.value = '';
+    $addressInput.value = '';
+    $companyInput.value = '';
+    $deliveryDateInput.value = '';
+    $noteInput.value = '';
+  }
   pendingOrderInfo = null;
   $btnOrderSubmit.disabled = false;
-  $btnOrderSubmit.textContent = '确认提交';
+  $btnOrderSubmit.textContent = orderToEdit ? '确认修改' : '确认提交';
   setOrderStep('info');
+  if (orderToEdit) $orderTitle.textContent = '编辑订单';
   $nameOverlay.classList.add('open');
   $nameOverlay.setAttribute('aria-hidden', 'false');
   setTimeout(() => $nameInput.focus(), 300);
@@ -2797,6 +3059,7 @@ function openNameModal() {
 function closeNameModal() {
   $nameOverlay.classList.remove('open');
   $nameOverlay.setAttribute('aria-hidden', 'true');
+  editingOrder = null;
 }
 async function confirmName() {
   const info = readOrderInfo();
@@ -2808,15 +3071,18 @@ async function confirmName() {
 async function submitConfirmedOrder() {
   if (!pendingOrderInfo) return;
   $btnOrderSubmit.disabled = true;
-  $btnOrderSubmit.textContent = '提交中...';
-  const order = await submitOrder(pendingOrderInfo);
+  $btnOrderSubmit.textContent = editingOrder ? '修改中...' : '提交中...';
+  const order = editingOrder
+    ? await updateCustomerOrder(editingOrder, pendingOrderInfo)
+    : await submitOrder(pendingOrderInfo);
   $btnOrderSubmit.disabled = false;
-  $btnOrderSubmit.textContent = '确认提交';
+  $btnOrderSubmit.textContent = editingOrder ? '确认修改' : '确认提交';
   if (!order) return;
   await fetchProductSales();
   refreshAll();
   renderOrderSuccess(order);
   setOrderStep('success');
+  if (order?.updatedAt) $orderTitle.textContent = '修改成功';
 }
 $nameClose.addEventListener('click', closeNameModal);
 $nameCancel.addEventListener('click', closeNameModal);
@@ -2878,7 +3144,8 @@ document.getElementById('btnClearCart').addEventListener('click', function() {
   }
 });
 document.getElementById('btnDownload').addEventListener('click', downloadOrder);
-document.getElementById('btnSubmit').addEventListener('click', openNameModal);
+document.getElementById('btnSubmit').addEventListener('click', () => openNameModal());
+document.getElementById('btnMyOrders').addEventListener('click', openMyOrders);
 // Mobile FAB → open modal
 $fab.addEventListener('click', function() {
   renderMobileModal();
@@ -2899,12 +3166,18 @@ document.getElementById('btnClearCartMobile').addEventListener('click', function
     showToast('已清空下单清单');
   }
 });
-document.getElementById('btnSubmitMobile').addEventListener('click', openNameModal);
+document.getElementById('btnSubmitMobile').addEventListener('click', () => openNameModal());
+document.getElementById('btnMyOrdersMobile').addEventListener('click', openMyOrders);
 // Modal
 document.getElementById('cartModalClose').addEventListener('click', closeModal);
 $modalOverlay.addEventListener('click', function(e) {
   if (e.target === $modalOverlay) closeModal();
 });
+$myOrdersClose.addEventListener('click', closeMyOrders);
+$myOrdersOverlay.addEventListener('click', function(e) {
+  if (e.target === $myOrdersOverlay) closeMyOrders();
+});
+$myOrdersContent.addEventListener('click', handleMyOrderAction);
 $productDetailClose.addEventListener('click', closeProductDetail);
 $productDetailOverlay.addEventListener('click', function(e) {
   if (e.target === $productDetailOverlay) closeProductDetail();
@@ -2949,6 +3222,8 @@ document.addEventListener('keydown', function(e) {
       closeProductDetail();
     } else if ($nameOverlay.classList.contains('open')) {
       closeNameModal();
+    } else if ($myOrdersOverlay.classList.contains('open')) {
+      closeMyOrders();
     } else if ($modalOverlay.classList.contains('open')) {
       closeModal();
     }

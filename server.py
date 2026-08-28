@@ -34,6 +34,7 @@ MAX_UPLOAD_SIZE = 5 * 1024 * 1024  # 5 MB
 app.config['MAX_CONTENT_LENGTH'] = MAX_UPLOAD_SIZE
 ORDER_STATUSES = ["新订单", "已联系", "已确认", "生产中", "已发货", "已完成", "已取消"]
 DEFAULT_ORDER_STATUS = "新订单"
+ORDER_EDIT_WINDOW_SECONDS = 10 * 60
 
 # JSON 读改写需要互斥，否则两个顾客同时下单会丢单
 _data_lock = threading.Lock()
@@ -189,6 +190,63 @@ def normalize_order(order):
     if order.get("status") not in ORDER_STATUSES:
         order["status"] = DEFAULT_ORDER_STATUS
     return order
+
+def public_order(order):
+    result = normalize_order(dict(order))
+    result.pop('editToken', None)
+    return result
+
+def order_edit_deadline(order):
+    raw = order.get('timestamp')
+    try:
+        created_at = datetime.fromisoformat(str(raw))
+    except (TypeError, ValueError):
+        return None
+    return created_at.timestamp() + ORDER_EDIT_WINDOW_SECONDS
+
+def can_customer_edit(order):
+    deadline = order_edit_deadline(order)
+    return deadline is not None and datetime.now().timestamp() <= deadline
+
+def sanitize_order_payload(data):
+    if not data or not data.get('customerName'):
+        return "请填写下单人姓名", None
+    if not data.get('customerPhone'):
+        return "请填写联系电话", None
+    if not data.get('customerAddress'):
+        return "请填写收货地址", None
+    if not data.get('items') or len(data['items']) == 0:
+        return "请选择商品", None
+    items = []
+    for item in data.get('items', []):
+        try:
+            qty = int(float(item.get('qty', 0) or 0))
+        except (TypeError, ValueError):
+            qty = 0
+        if qty <= 0:
+            continue
+        items.append({
+            "id": str(item.get('id', '')).strip(),
+            "name": str(item.get('name', '')).strip(),
+            "emoji": str(item.get('emoji', '')).strip(),
+            "cat": str(item.get('cat', '')).strip(),
+            "cardCount": str(item.get('cardCount', '')).strip(),
+            "productOption": str(item.get('productOption', '')).strip(),
+            "internalPrice": item.get('internalPrice', ''),
+            "price": item.get('price', ''),
+            "qty": qty
+        })
+    if not items:
+        return "请选择商品", None
+    return None, {
+        "customerName": data['customerName'].strip(),
+        "customerPhone": data.get('customerPhone', '').strip(),
+        "customerEmail": data.get('customerEmail', '').strip(),
+        "customerAddress": data.get('customerAddress', '').strip(),
+        "note": data.get('note', '').strip(),
+        "items": items,
+        "totalQty": sum(it.get('qty', 0) for it in items)
+    }
 
 def format_order_notification(order):
     lines = [
@@ -422,34 +480,30 @@ def get_orders():
     if not check_admin():
         return jsonify({"error":"未授权"}), 401
     orders = load_json(ORDERS_FILE, [])
-    orders = [normalize_order(dict(o)) for o in orders]
+    orders = [public_order(o) for o in orders]
     return jsonify(orders)
 
 @app.route('/api/orders', methods=['POST'])
 def submit_order():
     """提交新订单（顾客端无需鉴权）"""
     data = request.get_json()
-    if not data or not data.get('customerName'):
-        return jsonify({"error":"请填写下单人姓名"}), 400
-    if not data.get('customerPhone'):
-        return jsonify({"error":"请填写联系电话"}), 400
-    if not data.get('customerAddress'):
-        return jsonify({"error":"请填写收货地址"}), 400
-    if not data.get('items') or len(data['items']) == 0:
-        return jsonify({"error":"请选择商品"}), 400
+    error, clean = sanitize_order_payload(data)
+    if error:
+        return jsonify({"error": error}), 400
     now = datetime.now()
     order = {
         "orderNo": 'HP' + now.strftime('%Y%m%d%H%M%S') + uuid.uuid4().hex[:4],
-        "customerName": data['customerName'].strip(),
-        "customerPhone": data.get('customerPhone', '').strip(),
-        "customerEmail": data.get('customerEmail', '').strip(),
-        "customerAddress": data.get('customerAddress', '').strip(),
-        "note": data.get('note', '').strip(),
+        "customerName": clean["customerName"],
+        "customerPhone": clean["customerPhone"],
+        "customerEmail": clean["customerEmail"],
+        "customerAddress": clean["customerAddress"],
+        "note": clean["note"],
         "date": now.strftime('%Y/%m/%d'),
         "timestamp": now.isoformat(),
         "status": DEFAULT_ORDER_STATUS,
-        "items": data['items'],
-        "totalQty": sum(it.get('qty', 0) for it in data['items'])
+        "editToken": secrets.token_urlsafe(24),
+        "items": clean["items"],
+        "totalQty": clean["totalQty"]
     }
     def _insert(orders):
         orders.insert(0, order)
@@ -457,6 +511,51 @@ def submit_order():
     mutate_json(ORDERS_FILE, _insert, [])
     send_order_notification(order)
     return jsonify(order), 201
+
+@app.route('/api/orders/<order_no>', methods=['GET'])
+def get_customer_order(order_no):
+    """顾客凭编辑 token 查看自己的订单。"""
+    token = request.args.get('token', '').strip()
+    orders = load_json(ORDERS_FILE, [])
+    for order in orders:
+        if order.get("orderNo") == order_no and order.get("editToken") == token:
+            result = public_order(order)
+            result["editable"] = can_customer_edit(order)
+            result["editDeadline"] = order_edit_deadline(order)
+            return jsonify(result)
+    return jsonify({"error":"订单不存在或凭证无效"}), 404
+
+@app.route('/api/orders/<order_no>', methods=['PUT'])
+def update_customer_order(order_no):
+    """顾客 10 分钟内凭编辑 token 修改自己的订单。"""
+    data = request.get_json() or {}
+    token = str(data.get('editToken', '')).strip()
+    error, clean = sanitize_order_payload(data)
+    if error:
+        return jsonify({"error": error}), 400
+
+    def _update(orders):
+        for order in orders:
+            if order.get("orderNo") != order_no:
+                continue
+            if order.get("editToken") != token:
+                return orders, ("invalid", None)
+            if not can_customer_edit(order):
+                return orders, ("expired", None)
+            order.update(clean)
+            order["updatedAt"] = datetime.now().isoformat()
+            return orders, ("ok", order)
+        return orders, ("missing", None)
+
+    status, updated = mutate_json(ORDERS_FILE, _update, [])
+    if status == "invalid":
+        return jsonify({"error":"订单凭证无效"}), 403
+    if status == "expired":
+        return jsonify({"error":"订单已超过10分钟，不能修改"}), 409
+    if status == "missing":
+        return jsonify({"error":"订单不存在"}), 404
+    send_order_notification(updated)
+    return jsonify(updated)
 
 @app.route('/api/orders/<order_no>/status', methods=['PUT'])
 def update_order_status(order_no):
