@@ -196,6 +196,12 @@ def public_order(order):
     result.pop('editToken', None)
     return result
 
+def customer_order_response(order):
+    result = normalize_order(dict(order))
+    result["editable"] = can_customer_edit(order)
+    result["editDeadline"] = order_edit_deadline(order)
+    return result
+
 def order_edit_deadline(order):
     raw = order.get('timestamp')
     try:
@@ -522,7 +528,7 @@ def submit_order():
         return orders
     mutate_json(ORDERS_FILE, _insert, [])
     send_order_notification(order)
-    return jsonify(order), 201
+    return jsonify(customer_order_response(order)), 201
 
 @app.route('/api/orders/<order_no>', methods=['GET'])
 def get_customer_order(order_no):
@@ -531,10 +537,7 @@ def get_customer_order(order_no):
     orders = load_json(ORDERS_FILE, [])
     for order in orders:
         if order.get("orderNo") == order_no and order.get("editToken") == token:
-            result = public_order(order)
-            result["editable"] = can_customer_edit(order)
-            result["editDeadline"] = order_edit_deadline(order)
-            return jsonify(result)
+            return jsonify(customer_order_response(public_order(order)))
     return jsonify({"error":"订单不存在或凭证无效"}), 404
 
 @app.route('/api/orders/<order_no>', methods=['PUT'])
@@ -571,7 +574,7 @@ def update_customer_order(order_no):
     if status == "missing":
         return jsonify({"error":"订单不存在"}), 404
     send_order_notification(updated)
-    return jsonify(updated)
+    return jsonify(customer_order_response(updated))
 
 @app.route('/api/orders/<order_no>/cancel', methods=['PUT'])
 def cancel_customer_order(order_no):
@@ -605,7 +608,7 @@ def cancel_customer_order(order_no):
     if status == "missing":
         return jsonify({"error":"订单不存在"}), 404
     send_order_notification(updated)
-    return jsonify(updated)
+    return jsonify(customer_order_response(updated))
 
 @app.route('/api/orders/<order_no>/status', methods=['PUT'])
 def update_order_status(order_no):

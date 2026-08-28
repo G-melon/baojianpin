@@ -2681,11 +2681,22 @@ function orderCreatedTime(order) {
   const parsed = Date.parse(order.timestamp || '');
   return Number.isFinite(parsed) ? parsed : 0;
 }
+function orderEditDeadlineTime(order) {
+  const raw = order?.editDeadline;
+  if (raw == null || raw === '') return 0;
+  const deadline = Number(raw);
+  if (!Number.isFinite(deadline)) return 0;
+  return deadline > 100000000000 ? deadline : deadline * 1000;
+}
 function canEditCustomerOrder(order) {
+  const deadline = orderEditDeadlineTime(order);
+  if (deadline) return Boolean(order?.editToken && order?.status !== '已取消' && Date.now() <= deadline);
   const created = orderCreatedTime(order);
   return Boolean(order?.editToken && order?.status !== '已取消' && created && Date.now() - created <= ORDER_EDIT_WINDOW_MS);
 }
 function orderEditMinutesLeft(order) {
+  const deadline = orderEditDeadlineTime(order);
+  if (deadline) return Math.max(0, Math.ceil((deadline - Date.now()) / 60000));
   const created = orderCreatedTime(order);
   if (!created) return 0;
   return Math.max(0, Math.ceil((ORDER_EDIT_WINDOW_MS - (Date.now() - created)) / 60000));
