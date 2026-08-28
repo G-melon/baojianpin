@@ -1902,13 +1902,17 @@ async function fetchProducts() {
 }
 async function fetchProductSales() {
   try {
-    const res = await fetch('/api/product-sales');
+    const res = await fetch('/api/product-sales?t=' + Date.now(), { cache: 'no-store' });
     if (res.ok) {
       _productSales = await res.json();
       return;
     }
   } catch(e) {}
   _productSales = {};
+}
+async function refreshProductSalesView() {
+  await fetchProductSales();
+  renderGrid();
 }
 function getProducts() {
   return (_apiProducts || PRODUCTS).map(normalizeClientCategory);
@@ -2829,7 +2833,7 @@ async function cancelCustomerOrder(order) {
     const cancelled = await res.json();
     const saved = { ...cancelled, editToken: order.editToken };
     rememberOrder(saved);
-    await fetchProductSales();
+    await refreshProductSalesView();
     refreshAll();
     return saved;
   } catch(e) {
@@ -3118,7 +3122,7 @@ async function submitConfirmedOrder() {
   $btnOrderSubmit.disabled = false;
   $btnOrderSubmit.textContent = editingOrder ? '确认修改' : '确认提交';
   if (!order) return;
-  await fetchProductSales();
+  await refreshProductSalesView();
   refreshAll();
   renderOrderSuccess(order);
   setOrderStep('success');

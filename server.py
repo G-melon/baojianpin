@@ -382,7 +382,10 @@ def get_product_sales():
                 key = str(key or '').strip()
                 if key:
                     sales[key] = sales.get(key, 0) + qty
-    return jsonify(sales)
+    response = jsonify(sales)
+    response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+    response.headers['Pragma'] = 'no-cache'
+    return response
 
 @app.route('/api/products', methods=['POST'])
 def add_product():
