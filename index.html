@@ -2167,6 +2167,7 @@ function renderProductDetail(product, activeImage = null, selectedCardOption = n
   const productOptions = getProductOptions(product);
   const currentCardOption = selectedCardOption ?? cardOptions[0] ?? '';
   const currentProductOption = selectedProductOption ?? productOptions[0] ?? '';
+  const productOptionLabel = product.name === '口腔益生菌' ? '口味' : '商品选项';
   const specs = { ...(product.specs || {}) };
   if (cardOptions.length && !specs['可选规格']) specs['可选规格'] = cardOptions.join('、');
   if (productOptions.length && !specs['可选商品选项']) specs['可选商品选项'] = productOptions.join('、');
@@ -2247,10 +2248,10 @@ function renderProductDetail(product, activeImage = null, selectedCardOption = n
         </select>` : ''}
         ${productOptions.length ? `
         <div class="detail-order-row">
-          <span>商品选项</span>
+          <span>${productOptionLabel}</span>
           <span class="detail-order-value">${escapeHTML(currentProductOption)}</span>
         </div>
-        <label style="display:block;font-size:0.78rem;color:var(--color-text-subtle);margin:12px 0 6px">选择商品选项</label>
+        <label style="display:block;font-size:0.78rem;color:var(--color-text-subtle);margin:12px 0 6px">选择${productOptionLabel}</label>
         <select id="detailProductOption" class="search-input" style="width:100%;margin-bottom:12px;min-height:42px;padding:8px 12px">
           ${productOptions.map(option => `<option value="${escapeHTML(option)}"${option === currentProductOption ? ' selected' : ''}>${escapeHTML(option)}</option>`).join('')}
         </select>` : ''}

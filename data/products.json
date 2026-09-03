@@ -195,8 +195,11 @@
     "cardOptions": [
       "0.6g一片*21片一瓶"
     ],
-    "productOptionText": "",
-    "productOptions": [],
+    "productOptionText": "绿茶、水蜜桃",
+    "productOptions": [
+      "绿茶",
+      "水蜜桃"
+    ],
     "specs": {
       "商品名称": "口腔益生菌",
       "规格": "0.6g一片*21片一瓶",

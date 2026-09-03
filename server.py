@@ -294,6 +294,13 @@ def format_order_notification(order):
         lines.append(f'预估总金额：¥{total_amount:g}')
     return '\n'.join(lines)
 
+def item_spec_text(item):
+    spec = str(item.get('cardCount') or item.get('cardOption') or item.get('spec') or '').strip()
+    option = str(item.get('productOption') or '').strip()
+    if spec and option:
+        return f'{spec}\n口味：{option}'
+    return option and f'口味：{option}' or spec
+
 def send_order_notification(order):
     smtp_host = env_value('SMTP_HOST')
     smtp_user = env_value('SMTP_USER')
@@ -814,7 +821,7 @@ def build_orders_workbook(filtered, include_prices=False):
                 qty = item.get('qty','')
                 ws.cell(row=r, column=1, value=item.get('name','')).font = body_font
                 ws.cell(row=r, column=1).alignment = center_wrap
-                ws.cell(row=r, column=3, value=item.get('cardCount','')).font = body_font
+                ws.cell(row=r, column=3, value=item_spec_text(item)).font = body_font
                 ws.cell(row=r, column=3).alignment = center_wrap
                 ws.cell(row=r, column=4, value=qty).font = body_font
                 ws.cell(row=r, column=4).alignment = center_wrap
