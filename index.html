@@ -1926,6 +1926,7 @@ let searchQuery = '';
 let previewImages = [];
 let previewIndex = 0;
 let previewTitle = '商品图片';
+let productDetailHistoryOpen = false;
 const CATEGORY_NAMES = [
   '营养补充',
   '维生素矿物质',
@@ -2314,10 +2315,20 @@ function openProductDetail(productId) {
   renderProductDetail(product);
   $productDetailOverlay.classList.add('open');
   $productDetailOverlay.setAttribute('aria-hidden', 'false');
+  if (!productDetailHistoryOpen) {
+    history.pushState({ modal: 'product-detail' }, '', window.location.href);
+    productDetailHistoryOpen = true;
+  }
 }
-function closeProductDetail() {
+function closeProductDetail(fromHistory = false) {
   $productDetailOverlay.classList.remove('open');
   $productDetailOverlay.setAttribute('aria-hidden', 'true');
+  if (productDetailHistoryOpen) {
+    productDetailHistoryOpen = false;
+    if (!fromHistory && history.state && history.state.modal === 'product-detail') {
+      history.back();
+    }
+  }
 }
 function renderGrid() {
   const products = filterProducts();
@@ -3243,6 +3254,11 @@ $imagePreviewPrev.addEventListener('click', () => stepImagePreview(-1));
 $imagePreviewNext.addEventListener('click', () => stepImagePreview(1));
 $imagePreviewOverlay.addEventListener('click', function(e) {
   if (e.target === $imagePreviewOverlay) closeImagePreview();
+});
+window.addEventListener('popstate', function() {
+  if ($productDetailOverlay.classList.contains('open')) {
+    closeProductDetail(true);
+  }
 });
 document.getElementById('btnClearCartModal').addEventListener('click', function() {
   if (Object.keys(cart).length === 0) return;
